@@ -33,19 +33,6 @@ val testSettingsMUnit = Seq(
   testFrameworks += TestFrameworks.MUnit
 )
 
-val webjarSettings = Seq(
-  Compile / resourceGenerators += Def.task {
-    val logger = streams.value.log
-    copyWebjarResources(
-      Seq((Compile / sourceDirectory).value / "webjar"),
-      (Compile / resourceManaged).value,
-      name.value,
-      version.value,
-      logger
-    )
-  }.taskValue
-)
-
 val buildInfoSettings = Seq(
   buildInfoKeys := Seq[BuildInfoKey](
     name,
@@ -93,7 +80,7 @@ val backend = project
   .settings(testSettingsMUnit)
   .settings(
     name := "webappstub-backend",
-    libraryDependencies ++= Dependencies.fs2
+    libraryDependencies ++= Dependencies.fs2 ++ Dependencies.bcrypt
   )
   .dependsOn(common, store % "compile->compile;test->test")
 
@@ -111,7 +98,6 @@ val server = project
   .settings(sharedSettings)
   .settings(testSettingsMUnit)
   .settings(buildInfoSettings)
-//  .settings(webjarSettings)
   .settings(
     name := "webappstub-server",
     libraryDependencies ++=
@@ -130,17 +116,26 @@ val server = project
     Compile / sourceGenerators += Def.task {
       createWebjarSource(Dependencies.webjars, (Compile / sourceManaged).value)
     }.taskValue,
-  watchSources += Watched.WatchSource(
-    (Compile / sourceDirectory).value / "js",
-    FileFilter.globFilter("*.js"),
-    HiddenFileFilter
-  ),
-  watchSources += Watched.WatchSource(
-    (Compile / sourceDirectory).value / "css",
-    FileFilter.globFilter("*.css"),
-    HiddenFileFilter
-  )
-
+    watchSources += Watched.WatchSource(
+      (Compile / sourceDirectory).value / "js",
+      FileFilter.globFilter("*.js"),
+      HiddenFileFilter
+    ),
+    watchSources += Watched.WatchSource(
+      (Compile / sourceDirectory).value / "css",
+      FileFilter.globFilter("*.css"),
+      HiddenFileFilter
+    ),
+    Compile / resourceGenerators += Def.task {
+      val logger = streams.value.log
+      copyWebjarResources(
+        Seq((Compile / sourceDirectory).value / "webjar"),
+        (Compile / resourceManaged).value,
+        name.value,
+        version.value,
+        logger
+      )
+    }.taskValue
   )
   .dependsOn(common, backend)
 
@@ -199,7 +194,7 @@ def createWebjarSource(wj: Seq[ModuleID], out: File): Seq[File] = {
           .filterNot(invalidChars.contains)} = Artifact("${m.name}", "${m.revision}")"""
     )
     .mkString("\n\n")
-  val content = s"""package webappstub.server.ui
+  val content = s"""package webappstub.server.routes
                    |object Webjars {
                    |  case class Artifact(name: String, version: String)
                    |

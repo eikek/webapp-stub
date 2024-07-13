@@ -1,14 +1,14 @@
-package webappstub.server.contacts
+package webappstub.server.routes.contacts
 
 import cats.effect.kernel.Sync
 import cats.syntax.all.*
 
-import htmx4s.http4s.util.ValidationDsl.*
-
 import webappstub.backend.ContactService
 import webappstub.backend.ContactService.UpdateResult
 import webappstub.common.model.*
-import webappstub.server.contacts.Model.*
+import webappstub.server.routes.contacts.Model.*
+
+import htmx4s.http4s.util.ValidationDsl.*
 
 trait RoutesApi[F[_]]:
   def upsert(

@@ -4,30 +4,31 @@ import scala.concurrent.duration.*
 
 import cats.effect.*
 
-import htmx4s.http4s.WebjarRoute
+import webappstub.backend.Backend
+import webappstub.server.common.Responses
+import webappstub.server.routes.AppRoutes
 
-import org.http4s.{HttpRoutes, Response, Status}
 import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.implicits.*
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger as Http4sLogger
-import webappstub.backend.Backend
+import org.http4s.{HttpRoutes, Response, Status}
 import org.typelevel.otel4s.trace.Tracer
 
 object Main extends IOApp:
   given Tracer[IO] = Tracer.noop[IO]
   private val logger = scribe.cats.io
 
-  // refers to our own js and css stuff, version is not needed
-  private val selfWebjar = WebjarRoute.Webjar("self")("webappstub-server", "", "")
-  def createRoutes(backend: Backend[IO]): HttpRoutes[IO] = Router.of(
-    "/assets" -> WebjarRoute.withHtmx[IO](selfWebjar).serve,
-    "/ui" -> contacts.Routes[IO](contacts.RoutesApi(backend.contacts)).routes
-  )
+  def createRoutes(backend: Backend[IO], config: Config): HttpRoutes[IO] =
+    Router(
+      "/app" -> AppRoutes(backend, config).routes,
+      "/" -> Responses.redirectRoute(uri"/app/contacts")
+    )
 
   def run(args: List[String]): IO[ExitCode] =
     Config.load[IO].flatMap { cfg =>
       Backend[IO](cfg.backend).use { backend =>
-        val routes = createRoutes(backend)
+        val routes = createRoutes(backend, cfg)
         EmberServerBuilder
           .default[IO]
           .withHost(cfg.bindHost)

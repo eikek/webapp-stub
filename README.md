@@ -6,6 +6,9 @@ etc.
 
 The idea is to clone it, rename and modify as needed.
 
+Please note, this is very opinionated and intended for myself when
+starting some small projects. :smile:
+
 ## Outline
 
 It consists of these modules:
@@ -23,15 +26,41 @@ It consists of these modules:
 The application is a tiny "manage contacts" example application as
 described in the [htmx book](https://hypermedia.systems/).
 
+The favicon example is from [favicon.io](https://favicon.io).
+
+### Included "Stub-Features"
+
+It is usually a bit easier to remove things, so this stub implements
+some basic functiality that is useful across all projcts.
+
+- basic sbt setup with the above modules, making use of the following:
+  - typelevel stack: cats-effect, fs2
+  - postgresql and skunk
+  - http4s, htmx, htmx4s and scalatags
+  - ciris for reading configuration
+  - borer for json
+  - scribe for logging
+- dark/light ui theme with tailwind, controlled via a cookie
+- basic site layout with a top bar
+- user authenication with password or "auto-user" mode (then no login
+  is necessary, acts as if no authentication is implemented)
+- a "version" route for getting version information
+- a http4s `ContextMiddleware` that is supposed to handle common
+  request inputs, like authentication and settings (ui theme) and
+  possibly other things like language etc.
+- github actions for doing ci and release zips to github release page
+- release-drafter setup
+- nix dev and ci setup
+
 ## Nix
 
 The `flake.nix` provides a convenient development setup. It makes sure
 sbt and other tools are available. It also provides a development
-container when running on NixOS, that makes external services
-available, like the postgresql database. If not running NixOS, it a vm
-can be used instead, just enter a different development shell with
-`nix develop .#vm`. This is provided by
-[devshell-tools](https://github.com/eikek/devshell-tools).
+container (or vm), that makes external services available, like the
+postgresql database. When running on NixOS, the container can be used.
+If not running NixOS, it a vm can be used instead, just enter a
+different development shell with `nix develop .#vm`. This is provided
+by [devshell-tools](https://github.com/eikek/devshell-tools).
 
 The default development shell can be entered via `nix develop`.
 

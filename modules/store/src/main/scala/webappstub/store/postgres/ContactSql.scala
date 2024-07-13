@@ -1,11 +1,11 @@
 package webappstub.store.postgres
 
 import webappstub.common.model.*
+import webappstub.store.postgres.Codecs as c
 
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
-import webappstub.store.postgres.Codecs as c
 
 private object ContactSql:
 

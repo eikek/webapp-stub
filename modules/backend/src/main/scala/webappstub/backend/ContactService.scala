@@ -1,7 +1,7 @@
 package webappstub.backend
 
-import cats.effect.*
 import cats.Monad
+import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.common.model.*
@@ -40,7 +40,8 @@ object ContactService:
             case Some(existing) =>
               if (existing.id != contact.id) UpdateResult.EmailDuplicate.pure[F]
               else
-                repo.update(contact)
+                repo
+                  .update(contact)
                   .map:
                     case true  => UpdateResult.Success(contact.id)
                     case false => UpdateResult.NotFound

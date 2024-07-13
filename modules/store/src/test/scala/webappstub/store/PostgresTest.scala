@@ -4,14 +4,14 @@ import cats.effect.*
 import cats.effect.std.Random
 import cats.syntax.all.*
 
+import webappstub.common.model.Password
 import webappstub.store.migration.SchemaMigration
-import webappstub.common.Password
+import webappstub.store.postgres.*
 
 import com.comcast.ip4s.*
 import org.typelevel.otel4s.trace.Tracer
 import skunk.Session
 import skunk.implicits.*
-import webappstub.store.postgres.PostgresContactRepo
 
 trait PostgresTest {
   given Tracer[IO] = Tracer.noop[IO]
@@ -75,5 +75,9 @@ trait PostgresTest {
   val contactRepoResource: Resource[IO, ContactRepo[IO]] =
     randomDbWithSchema.map { dbCfg =>
       PostgresContactRepo(makeSession(dbCfg))
+    }
+  val accountRepoResource: Resource[IO, AccountRepo[IO]] =
+    randomDbWithSchema.map { dbCfg =>
+      PostgresAccountRepo(makeSession(dbCfg))
     }
 }

@@ -1,9 +1,10 @@
-package webappstub.server.contacts
+package webappstub.server.routes.contacts
 
+import webappstub.common.model
+
+import org.http4s.QueryParamDecoder
 import org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher
 import org.http4s.dsl.impl.QueryParamDecoderMatcher
-import org.http4s.QueryParamDecoder
-import webappstub.common.model
 
 object Params:
   given QueryParamDecoder[model.ContactId] =

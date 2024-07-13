@@ -1,15 +1,15 @@
-package webappstub.server.contacts
+package webappstub.server.routes.contacts
 
 import cats.data.Validated
 import cats.syntax.all.*
 
+import webappstub.common.model.*
+import webappstub.server.routes.contacts.ContactError.*
+
 import htmx4s.http4s.util.ValidationDsl.*
 import htmx4s.http4s.util.ValidationErrors
-
 import org.http4s.FormDataDecoder
 import org.http4s.FormDataDecoder.*
-import webappstub.common.model.*
-import webappstub.server.contacts.ContactError.*
 
 object Model:
 

@@ -7,6 +7,7 @@ object Dependencies {
     val scala3 = "3.4.2"
 
     val borer = "1.13.0"
+    val bcrypt = "0.4"
     val catsEffect = "3.5.4"
     val catsParse = "1.0.0"
     val ciris = "3.6.0"
@@ -26,8 +27,11 @@ object Dependencies {
     val htmx = "2.0.0"
     val http4sScalatags = "0.25.2"
     val flagIcons = "7.2.3"
-    val tusClient = "4.1.0"
   }
+
+  val bcrypt = Seq(
+    "org.mindrot" % "jbcrypt" % V.bcrypt
+  )
 
   val htmx4s = Seq(
     "com.github.eikek" %% "htmx4s-constants" % V.htmx4s,
@@ -41,9 +45,9 @@ object Dependencies {
   )
 
   val monocle = Seq(
-      "dev.optics" %% "monocle-core" % V.monocle,
-      "dev.optics" %% "monocle-macro" % V.monocle
-    )
+    "dev.optics" %% "monocle-core" % V.monocle,
+    "dev.optics" %% "monocle-macro" % V.monocle
+  )
 
   val scribe = Seq(
     "com.outr" %% "scribe" % V.scribe,
@@ -108,8 +112,7 @@ object Dependencies {
     "org.webjars.npm" % "htmx.org" % V.htmx,
     "org.webjars.npm" % "htmx-ext-response-targets" % V.htmx,
     "org.webjars.npm" % "fortawesome__fontawesome-free" % V.fontawesome,
-    "org.webjars.npm" % "flag-icons" % V.flagIcons,
-    "org.webjars.npm" % "tus-js-client" % V.tusClient
+    "org.webjars.npm" % "flag-icons" % V.flagIcons
   ).map(
     // transitive deps are not needed, some fail to resolve
     _.excludeAll(

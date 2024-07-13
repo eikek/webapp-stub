@@ -7,5 +7,4 @@ object ContactId:
 
   def apply(n: Long): ContactId = n
 
-  extension (self: ContactId)
-    def value: Long = self
+  extension (self: ContactId) def value: Long = self

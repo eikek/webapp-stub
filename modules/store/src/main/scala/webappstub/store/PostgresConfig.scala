@@ -1,6 +1,6 @@
 package webappstub.store
 
-import webappstub.common.Password
+import webappstub.common.model.Password
 
 import com.comcast.ip4s.{Host, Port}
 import io.bullet.borer.Encoder

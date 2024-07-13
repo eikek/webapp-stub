@@ -1,4 +1,4 @@
-package webappstub.server.contacts
+package webappstub.server.routes.contacts
 
 import cats.data.Validated
 import cats.syntax.all.*

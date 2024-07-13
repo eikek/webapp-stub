@@ -3,9 +3,10 @@ package webappstub.store.postgres
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.store.ContactRepo
-import skunk.Session
 import webappstub.common.model.*
+import webappstub.store.ContactRepo
+
+import skunk.Session
 
 final class PostgresContactRepo[F[_]: Sync](session: Resource[F, Session[F]])
     extends ContactRepo[F]:

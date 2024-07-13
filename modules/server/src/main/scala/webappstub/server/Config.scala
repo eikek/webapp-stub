@@ -1,20 +1,29 @@
 package webappstub.server
 
-import cats.syntax.all.*
 import cats.effect.*
-import com.comcast.ip4s.*
-import webappstub.server.config.*
+import cats.syntax.all.*
+
 import webappstub.backend.BackendConfig
+import webappstub.server.config.*
+
+import com.comcast.ip4s.*
+import org.http4s.Uri
 
 final case class Config(
-  backend: BackendConfig,
-  bindHost: Host,
-  bindPort: Port
+    backend: BackendConfig,
+    bindHost: Host,
+    bindPort: Port,
+    baseUrl: Uri,
+    webapp: WebConfig
 )
 
 object Config:
 
   def load[F[_]: Async]: F[Config] =
-      (ConfigValues.backend,
+    (
+      ConfigValues.backend,
       ConfigValues.bindHost,
-      ConfigValues.bindPort).mapN(Config.apply).load[F]
+      ConfigValues.bindPort,
+      ConfigValues.baseUri,
+      ConfigValues.webConfig
+    ).mapN(Config.apply).load[F]

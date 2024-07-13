@@ -1,15 +1,17 @@
-package webappstub.server.contacts
+package webappstub.server.routes.contacts
 
 import cats.syntax.all.*
 
-import htmx4s.scalatags.Bundle.*
+import webappstub.common.model.*
+import webappstub.server.data.UiTheme
+import webappstub.server.routes.Layout
+import webappstub.server.routes.contacts.Model.*
 
+import htmx4s.scalatags.Bundle.*
 import scalatags.Text.TypedTag
 import scalatags.Text.all.doctype
-import webappstub.common.model.*
-import webappstub.server.contacts.Model.*
 
-object Views:
+final class Views(theme: UiTheme):
   lazy val searchControls: Set[String] = Set(Id.searchBtn, Id.searchInput)
   private object Id:
     val searchBtn = "search-btn"
@@ -23,31 +25,6 @@ object Views:
     val searchInput =
       "border rounded my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
 
-  def layout(titleStr: String)(content: TypedTag[String]) =
-    doctype("html")(
-      html(
-        cls := "dark",
-        head(
-          title(attr.name := s"Contact- $titleStr"),
-          meta(attr.charset := "UTF-8"),
-          meta(attr.name := "mobile-web-app-capable", attr.content := "yes"),
-          meta(
-            attr.name := "viewport",
-            attr.content := "width=device-width, initial-scale=1, user-scalable=yes"
-          ),
-          script(attr.src := "/assets/htmx/htmx.min.js", attr.crossorigin := "anonymous"),
-          link(attr.href := "/assets/self/index.css", attr.rel := "stylesheet"),
-          script(attr.src := "/assets/self/all.min.js", attr.crossorigin := "anonymous")
-        ),
-        body(
-          cls := "container mx-auto mx-2 bg-white text-gray-900 dark:bg-slate-800 dark:text-slate-100",
-          attr.hxBoost := true,
-          h1(cls := "text-3xl font-bold my-4", "Contact App"),
-          content
-        )
-      )
-    )
-
   def notFound =
     div(
       h2(cls := "text-2xl font-semibold my-2", "Resource not found!"),
@@ -57,7 +34,7 @@ object Views:
       )
     )
 
-  def notFoundPage = layout("Not Found")(notFound)
+  def notFoundPage = Layout("Not Found", theme)(notFound)
 
   def showContact(c: Contact) =
     div(
@@ -77,7 +54,7 @@ object Views:
     span(cls := "ml-2 text-sm", s"$n total contacts")
 
   def showContactPage(m: ContactShowPage) =
-    layout(m.contact.fullName)(showContact(m.contact))
+    Layout(m.contact.fullName, theme)(showContact(m.contact))
 
   def errorList(errors: List[String]): TypedTag[String] =
     val hidden = if (errors.isEmpty) "hidden" else ""
@@ -194,7 +171,7 @@ object Views:
 
   def editContactPage(m: ContactEditPage) =
     val title = m.fullName.map(n => s"Edit $n").getOrElse("Create New")
-    layout(title)(
+    Layout(title, theme)(
       div(
         editContact(m.form, m.id, m.validationErrors),
         m.validationErrors.map(_ => p("There are form errors"))
@@ -202,7 +179,7 @@ object Views:
     )
 
   def contactListPage(m: ContactListPage): doctype =
-    layout("Contact Search")(
+    Layout("Contact Search", theme)(
       div(
         cls := "flex flex-col",
         div(

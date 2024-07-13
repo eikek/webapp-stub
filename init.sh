@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-
+#
+# requires bash 4+ (sorry apple user)
 set -euo pipefail
 
 new_name="${NEW_NAME:-}"
@@ -34,23 +35,18 @@ for f in $(find modules -type f -name "*.scala"); do
     echo "Fix $f"
     if [ $dry_run -eq 0 ]; then
         sed -i -e "s/webappstub/$new_name/g" "$f"
-    else
-        sed -e "s/webappstub/$new_name/g" "$f"
+        sed -i -e "s/Webappstub/${new_name^}/g" "$f"
     fi
 done
 
 echo "Fix build.sbt"
 if [ $dry_run -eq 0 ]; then
     sed -i -e "s/webappstub/$new_name/g" build.sbt
-else
-    sed -e "s/webappstub/$new_name/g" build.sbt
 fi
 
 echo "Fix scalafix.conf"
 if [ $dry_run -eq 0 ]; then
     sed -i -e "s/webappstub/$new_name/g" .scalafix.conf
-else
-    sed -e "s/webappstub/$new_name/g" .scalafix.conf
 fi
 
 echo "Fix flake.nix"
@@ -74,5 +70,6 @@ if [ "$reinit_git" == "y" ]; then
     git config user.name "$user_name"
     git config user.email "$user_email"
     git add .
+    git rm --cached init.sh
     git commit -am 'hello world'
 fi
