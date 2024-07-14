@@ -18,6 +18,9 @@ object Styles:
     "placeholder-gray-400 w-full dark:text-stone-200 dark:bg-stone-800 dark:border-stone-500 " +
       s"border-gray-400 rounded border $formFocusRing"
 
+  val searchInput =
+    "border rounded my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
+
   val primaryButtonMain =
     "my-auto whitespace-nowrap bg-blue-500 border border-blue-500 dark:border-orange-800 dark:bg-orange-800 text-white text-center px-4 py-2 shadow-md focus:outline-none focus:ring focus:ring-opacity-75"
 
@@ -45,3 +48,7 @@ object Styles:
 
   val basicBtnHover =
     "hover:border-gray-300 dark:hover:border-stone-600 hover:bg-blue-100  dark:hover:text-white dark:hover:bg-stone-600 dark:hover:text-stone-100 cursor-pointer"
+
+  val link = "text-blue-500 hover:text-blue-600 cursor-pointer"
+
+  val btn = primaryButtonPlain

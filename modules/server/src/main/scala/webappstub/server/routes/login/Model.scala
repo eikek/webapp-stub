@@ -4,25 +4,21 @@ import cats.syntax.all.*
 
 import webappstub.backend.auth.UserPass
 import webappstub.common.model.*
+import htmx4s.http4s.util.ValidationDsl.*
+import webappstub.server.routes.login.LoginError.*
 
 import org.http4s.FormDataDecoder
 import org.http4s.FormDataDecoder.*
-import org.http4s.ParseFailure
 import org.http4s.QueryParamDecoder
 
 object Model:
-  given QueryParamDecoder[Password] =
-    QueryParamDecoder[String].map(Password.apply)
-
-  given QueryParamDecoder[LoginName] =
-    QueryParamDecoder[String].emap(s =>
-      LoginName.fromString(s).leftMap(err => ParseFailure(err, err))
-    )
-
-  final case class UserPasswordForm(user: LoginName, password: Password):
-    def toModel: UserPass = UserPass(user, password)
+  final case class UserPasswordForm(user: String, password: String):
+    def toModel: LoginValid[UserPass] = {
+      val login = LoginName.fromString(user).toValidatedNel.keyed(Key.LoginName)
+      login.map(l => UserPass(l, Password(password)))
+    }
 
   object UserPasswordForm:
     given FormDataDecoder[UserPasswordForm] =
-      (field[LoginName]("username"), field[Password]("password"))
+      (field[String]("username"), field[String]("password"))
         .mapN(UserPasswordForm.apply)

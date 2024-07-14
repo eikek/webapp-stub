@@ -10,31 +10,13 @@ import webappstub.server.routes.contacts.Model.*
 import htmx4s.scalatags.Bundle.*
 import scalatags.Text.TypedTag
 import scalatags.Text.all.doctype
+import webappstub.server.routes.Styles
 
 final class Views(theme: UiTheme):
   lazy val searchControls: Set[String] = Set(Id.searchBtn, Id.searchInput)
   private object Id:
     val searchBtn = "search-btn"
     val searchInput = "search-input"
-  private object Style:
-    val link = "text-blue-500 hover:text-blue-600 cursor-pointer"
-    val btn =
-      "px-2 py-1 rounded border border-blue-500 bg-blue-200 bg-opacity-50 text-blue-800 cursor-pointer hover:bg-opacity-75 dark:border-orange-700 dark:bg-orange-800 dark:text-white"
-    val input =
-      "text-lg border rounded ml-2 my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
-    val searchInput =
-      "border rounded my-1 dark:border-slate-700 border-grey-400 dark:bg-slate-700 dark:text-slate-200  px-1"
-
-  def notFound =
-    div(
-      h2(cls := "text-2xl font-semibold my-2", "Resource not found!"),
-      p("Sorry, this doesn't exist."),
-      p(
-        a(cls := Style.link, attr.href := "/ui/contacts", "Home")
-      )
-    )
-
-  def notFoundPage = Layout("Not Found", theme)(notFound)
 
   def showContact(c: Contact) =
     div(
@@ -45,8 +27,8 @@ final class Views(theme: UiTheme):
       ),
       div(
         cls := "flex flex-row items-center space-x-2 mt-4",
-        a(cls := Style.btn, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
-        a(cls := Style.btn, attr.href := "/ui/contacts", "Back")
+        a(cls := Styles.btn, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
+        a(cls := Styles.btn, attr.href := "/ui/contacts", "Back")
       )
     )
 
@@ -90,7 +72,7 @@ final class Views(theme: UiTheme):
               )
             ),
             input(
-              cls := Style.input,
+              cls := Styles.textInput,
               attr.name := "email",
               attr.id := "email",
               attr.`type` := "email",
@@ -112,7 +94,7 @@ final class Views(theme: UiTheme):
               "First Name"
             ),
             input(
-              cls := Style.input,
+              cls := Styles.textInput,
               attr.name := "firstName",
               attr.id := "name.first",
               attr.`type` := "text",
@@ -125,7 +107,7 @@ final class Views(theme: UiTheme):
             cls := "flex flex-col md:w-1/2",
             label(attr.`for` := "name.last", cls := "font-semibold text-md", "Last Name"),
             input(
-              cls := Style.input,
+              cls := Styles.textInput,
               attr.name := "lastName",
               attr.id := "name.last",
               attr.`type` := "text",
@@ -138,7 +120,7 @@ final class Views(theme: UiTheme):
             cls := "flex flex-col md:w-1/2",
             label(attr.`for` := "phone", cls := "font-semibold text-md", "Phone"),
             input(
-              cls := Style.input,
+              cls := Styles.textInput,
               attr.name := "phone",
               attr.id := "phone",
               attr.`type` := "phone",
@@ -152,10 +134,10 @@ final class Views(theme: UiTheme):
           ),
           div(
             cls := "mt-4 flex flex-row items-center space-x-2",
-            button(cls := Style.btn, "Save"),
+            button(cls := Styles.btn, "Save"),
             id.map { n =>
               button(
-                cls := Style.btn + " mx-3",
+                cls := Styles.btn + " mx-3",
                 attr.hxDelete := s"/ui/contacts/$n",
                 attr.hxTarget := "body",
                 attr.hxPushUrl := true,
@@ -163,7 +145,7 @@ final class Views(theme: UiTheme):
                 "Delete Contact"
               )
             },
-            a(cls := Style.btn, attr.href := "/ui/contacts", "Back")
+            a(cls := Styles.btn, attr.href := "/ui/contacts", "Back")
           )
         )
       )
@@ -186,7 +168,7 @@ final class Views(theme: UiTheme):
           cls := "h-8 flex flex-row items-center my-1",
           div(
             input(
-              cls := Style.searchInput + " h-full mr-1",
+              cls := Styles.searchInput + " h-full mr-1",
               attr.id := Id.searchInput,
               attr.`type` := "search",
               attr.name := "q",
@@ -198,7 +180,7 @@ final class Views(theme: UiTheme):
               attr.hxIndicator := "#spinner"
             ),
             a(
-              cls := Style.btn,
+              cls := Styles.btn,
               attr.hxGet := "/ui/contacts",
               attr.hxInclude := "#search",
               attr.hxTarget := "table",
@@ -216,7 +198,7 @@ final class Views(theme: UiTheme):
           div(
             cls := "flex-grow flex flex-row items-center justify-end",
             a(
-              cls := Style.link + " inline-block",
+              cls := Styles.link + " inline-block",
               attr.href := "/ui/contacts/new",
               "Add Contact"
             ),
@@ -232,7 +214,7 @@ final class Views(theme: UiTheme):
           div(
             cls := "mt-3",
             a(
-              cls := Style.btn,
+              cls := Styles.btn,
               attr.hxDelete := "/ui/contacts",
               attr.hxConfirm := "Are you sure?",
               attr.hxTarget := "body",
@@ -277,8 +259,8 @@ final class Views(theme: UiTheme):
             td(cls := "text-left px-2", c.phone.map(_.value).getOrElse("-")),
             td(
               cls := "actions flex flex-row items-center justify-end space-x-2 text-sm invisible",
-              a(cls := Style.btn, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
-              a(cls := Style.btn, attr.href := s"/ui/contacts/${c.id}", "View")
+              a(cls := Styles.btn, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
+              a(cls := Styles.btn, attr.href := s"/ui/contacts/${c.id}", "View")
             )
           )
         ),
@@ -288,7 +270,7 @@ final class Views(theme: UiTheme):
             td(
               attr.colspan := 5,
               button(
-                cls := Style.btn,
+                cls := Styles.btn,
                 attr.hxTarget := "closest tr",
                 attr.hxSwap := "outerHTML",
                 attr.hxSelect := "tbody > tr",

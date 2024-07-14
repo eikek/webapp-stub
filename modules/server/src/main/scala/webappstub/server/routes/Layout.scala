@@ -94,3 +94,14 @@ object Layout:
         cls := "flex flex-grow justify-end"
       )
     )
+
+  private def notFound =
+    div(
+      h2(cls := "text-2xl font-semibold my-2", "Resource not found!"),
+      p("Sorry, this doesn't exist."),
+      p(
+        a(cls := Styles.link, attr.href := "/ui/contacts", "Home")
+      )
+    )
+
+  def notFoundPage(theme: UiTheme) = Layout("Not Found", theme)(notFound)
