@@ -5,12 +5,12 @@ import cats.syntax.all.*
 import webappstub.common.model.*
 import webappstub.server.data.UiTheme
 import webappstub.server.routes.Layout
+import webappstub.server.routes.Styles
 import webappstub.server.routes.contacts.Model.*
 
 import htmx4s.scalatags.Bundle.*
 import scalatags.Text.TypedTag
 import scalatags.Text.all.doctype
-import webappstub.server.routes.Styles
 
 final class Views(theme: UiTheme):
   lazy val searchControls: Set[String] = Set(Id.searchBtn, Id.searchInput)
@@ -20,15 +20,16 @@ final class Views(theme: UiTheme):
 
   def showContact(c: Contact) =
     div(
-      h2(cls := "text-lg font-bold underline", c.fullName),
+      h2(cls := "text-xl font-bold underline", c.fullName),
       div(
         div("Phone:", c.phone.map(_.value).getOrElse("-")),
         div("Email:", c.email.map(_.value).getOrElse("-"))
       ),
       div(
         cls := "flex flex-row items-center space-x-2 mt-4",
-        a(cls := Styles.btn, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
-        a(cls := Styles.btn, attr.href := "/ui/contacts", "Back")
+        attr.hxBoost := true,
+        a(cls := Styles.btn, attr.href := s"/app/contacts/${c.id}/edit", "Edit"),
+        a(cls := Styles.btn, attr.href := "/app/contacts", "Back")
       )
     )
 
@@ -36,7 +37,12 @@ final class Views(theme: UiTheme):
     span(cls := "ml-2 text-sm", s"$n total contacts")
 
   def showContactPage(m: ContactShowPage) =
-    Layout(m.contact.fullName, theme)(showContact(m.contact))
+    Layout(m.contact.fullName, theme, Layout.topNavBar.some)(
+      div(
+        cls := "container mx-auto mt-2",
+        showContact(m.contact)
+      )
+    )
 
   def errorList(errors: List[String]): TypedTag[String] =
     val hidden = if (errors.isEmpty) "hidden" else ""
@@ -55,7 +61,7 @@ final class Views(theme: UiTheme):
   ) =
     div(
       form(
-        attr.action := id.fold("/ui/contacts/new")(n => s"/ui/contacts/$n/edit"),
+        attr.action := id.fold("/app/contacts/new")(n => s"/app/contacts/$n/edit"),
         attr.method := "POST",
         fieldset(
           cls := "flex flex-col border border-gray-100 dark:border-slate-700 px-4 py-2",
@@ -78,7 +84,7 @@ final class Views(theme: UiTheme):
               attr.`type` := "email",
               attr.placeholder := "Email",
               attr.value := c.email.orEmpty,
-              attr.hxGet := "/ui/contacts/email-check",
+              attr.hxGet := "/app/contacts/email-check",
               attr.hxInclude := "[name='id']",
               attr.hxTarget := "next .error-list",
               attr.hxSwap := "outerHTML",
@@ -138,14 +144,19 @@ final class Views(theme: UiTheme):
             id.map { n =>
               button(
                 cls := Styles.btn + " mx-3",
-                attr.hxDelete := s"/ui/contacts/$n",
+                attr.hxDelete := s"/app/contacts/$n",
                 attr.hxTarget := "body",
                 attr.hxPushUrl := true,
                 attr.hxConfirm := "Are you sure you want to delete this contact?",
                 "Delete Contact"
               )
             },
-            a(cls := Styles.btn, attr.href := "/ui/contacts", "Back")
+            a(
+              cls := Styles.btn,
+              attr.hxBoost := true,
+              attr.href := "/app/contacts",
+              "Back"
+            )
           )
         )
       )
@@ -153,17 +164,19 @@ final class Views(theme: UiTheme):
 
   def editContactPage(m: ContactEditPage) =
     val title = m.fullName.map(n => s"Edit $n").getOrElse("Create New")
-    Layout(title, theme)(
+    Layout(title, theme, Layout.topNavBar.some)(
       div(
+        cls := "container mx-auto mt-2",
+        h2(cls := "text-xl font-bold mb-2", title),
         editContact(m.form, m.id, m.validationErrors),
         m.validationErrors.map(_ => p("There are form errors"))
       )
     )
 
   def contactListPage(m: ContactListPage): doctype =
-    Layout("Contact Search", theme)(
+    Layout("Contact Search", theme, Layout.topNavBar.some)(
       div(
-        cls := "flex flex-col",
+        cls := "flex flex-col container mx-auto",
         div(
           cls := "h-8 flex flex-row items-center my-1",
           div(
@@ -173,21 +186,21 @@ final class Views(theme: UiTheme):
               attr.`type` := "search",
               attr.name := "q",
               attr.value := m.query.getOrElse(""),
-              attr.hxGet := "/ui/contacts",
+              attr.hxGet := "/app/contacts",
               attr.hxTarget := "table",
               attr.hxTrigger := "search, keyup delay:200ms changed",
               attr.hxPushUrl := true,
               attr.hxIndicator := "#spinner"
             ),
             a(
-              cls := Styles.btn,
-              attr.hxGet := "/ui/contacts",
+              cls := s"${Styles.btn} text-xs rounded-lg",
+              attr.hxGet := "/app/contacts",
               attr.hxInclude := "#search",
               attr.hxTarget := "table",
               attr.id := Id.searchBtn,
               attr.hxPushUrl := true,
               attr.hxIndicator := "#spinner",
-              "Search"
+              i(cls := "fa fa-search")
             )
           ),
           div(
@@ -197,13 +210,14 @@ final class Views(theme: UiTheme):
           ),
           div(
             cls := "flex-grow flex flex-row items-center justify-end",
+            attr.hxBoost := true,
             a(
               cls := Styles.link + " inline-block",
-              attr.href := "/ui/contacts/new",
+              attr.href := "/app/contacts/new",
               "Add Contact"
             ),
             span(
-              attr.hxGet := "/ui/contacts/count",
+              attr.hxGet := "/app/contacts/count",
               attr.hxTrigger := "load"
             )
           )
@@ -215,7 +229,7 @@ final class Views(theme: UiTheme):
             cls := "mt-3",
             a(
               cls := Styles.btn,
-              attr.hxDelete := "/ui/contacts",
+              attr.hxDelete := "/app/contacts",
               attr.hxConfirm := "Are you sure?",
               attr.hxTarget := "body",
               "Delete selected contacts"
@@ -259,8 +273,9 @@ final class Views(theme: UiTheme):
             td(cls := "text-left px-2", c.phone.map(_.value).getOrElse("-")),
             td(
               cls := "actions flex flex-row items-center justify-end space-x-2 text-sm invisible",
-              a(cls := Styles.btn, attr.href := s"/ui/contacts/${c.id}/edit", "Edit"),
-              a(cls := Styles.btn, attr.href := s"/ui/contacts/${c.id}", "View")
+              attr.hxBoost := true,
+              a(cls := Styles.btn, attr.href := s"/app/contacts/${c.id}/edit", "Edit"),
+              a(cls := Styles.btn, attr.href := s"/app/contacts/${c.id}", "View")
             )
           )
         ),
@@ -274,7 +289,7 @@ final class Views(theme: UiTheme):
                 attr.hxTarget := "closest tr",
                 attr.hxSwap := "outerHTML",
                 attr.hxSelect := "tbody > tr",
-                attr.hxGet := s"/ui/contacts?page=${page + 1}",
+                attr.hxGet := s"/app/contacts?page=${page + 1}",
                 attr.hxIndicator := "#spinner",
                 "Load More"
               )

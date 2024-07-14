@@ -10,6 +10,7 @@ import webappstub.store.AccountRepo
 trait LoginService[F[_]]:
   def loginSession(sessionKey: String): F[LoginResult]
   def loginUserPass(up: UserPass): F[LoginResult]
+  def autoLogin: F[LoginResult]
 
 object LoginService:
 
@@ -33,6 +34,8 @@ object LoginService:
 
         case AuthConfig.AuthenticationType.Fixed =>
           loginFixed
+
+      def autoLogin: F[LoginResult] = loginFixed
 
       def loginInternal(up: UserPass): F[LoginResult] =
         for

@@ -13,6 +13,8 @@ import webappstub.server.routes.{Layout, UiConfig}
 import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.headers.HxLocation
 import org.http4s.HttpRoutes
+import org.http4s.headers.Location
+import org.http4s.implicits.*
 import org.http4s.scalatags.*
 
 final class LoginRoutes[F[_]: Async](
@@ -25,25 +27,8 @@ final class LoginRoutes[F[_]: Async](
 
   def routes(ctx: Context.OptionalAuth) = HttpRoutes.of[F] {
     case GET -> Root =>
-      // TODO: check for loggedin state
-      Ok(Layout("Login", ctx.settings.theme)(View.view(uiCfg, ctx.settings), None))
-
-    case req @ POST -> Root / "refresh" =>
-      WebappstubAuth.fromRequest(req) match
-        case None => BadRequest()
-        case Some(token) =>
-          api
-            .refreshToken(token)
-            .flatMap(
-              _.fold(
-                Forbidden(View.loginFailed("Authentication failed")),
-                newToken => {
-                  val cookie = WebappstubAuth.fromToken(newToken)
-                  val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
-                  NoContent().map(_.addCookie(cookie.asCookie(baseUrl)))
-                }
-              )
-            )
+      if (ctx.token.isDefined) TemporaryRedirect(Location(uri"/app/contacts"))
+      else Ok(Layout("Login", ctx.settings.theme)(View.view(uiCfg, ctx.settings)))
 
     case req @ POST -> Root =>
       for

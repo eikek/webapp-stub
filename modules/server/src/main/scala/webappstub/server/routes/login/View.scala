@@ -21,10 +21,7 @@ object View:
         cls := s"flex flex-col px-2 sm:px-4 py-4 rounded-md min-w-full md:min-w-0 md:w-96 ${Styles.boxMd}",
         div(
           cls := "self-center",
-          img(
-            cls := "max-w-xs mx-auto max-h-20"
-//            attr.src := ctx.theme.fold(cfg.logoUrl, cfg.logoUrlDark).renderString
-          )
+          h2(cls := "text-2xl font-bold mx-auto", cfg.name)
         ),
         form(
           cls := "",

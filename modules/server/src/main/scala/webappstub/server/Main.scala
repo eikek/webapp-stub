@@ -27,23 +27,24 @@ object Main extends IOApp:
 
   def run(args: List[String]): IO[ExitCode] =
     Config.load[IO].flatMap { cfg =>
-      Backend[IO](cfg.backend).use { backend =>
-        val routes = createRoutes(backend, cfg)
-        EmberServerBuilder
-          .default[IO]
-          .withHost(cfg.bindHost)
-          .withPort(cfg.bindPort)
-          .withHttpApp(
-            Http4sLogger.httpApp(true, false)(routes.orNotFound)
-          )
-          .withShutdownTimeout(0.millis)
-          .withErrorHandler { case ex =>
-            logger
-              .error("Service raised an error!", ex)
-              .as(Response(status = Status.InternalServerError))
-          }
-          .build
-          .use(_ => IO.never)
-          .as(ExitCode.Success)
-      }
+      logger.info(s"Config: $cfg") >>
+        Backend[IO](cfg.backend).use { backend =>
+          val routes = createRoutes(backend, cfg)
+          EmberServerBuilder
+            .default[IO]
+            .withHost(cfg.bindHost)
+            .withPort(cfg.bindPort)
+            .withHttpApp(
+              Http4sLogger.httpApp(true, false)(routes.orNotFound)
+            )
+            .withShutdownTimeout(0.millis)
+            .withErrorHandler { case ex =>
+              logger
+                .error("Service raised an error!", ex)
+                .as(Response(status = Status.InternalServerError))
+            }
+            .build
+            .use(_ => IO.never)
+            .as(ExitCode.Success)
+        }
     }

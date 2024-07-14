@@ -66,7 +66,7 @@ object ConfigValues extends ConfigDecoders:
   val auth = {
     val secret = config("SERVER_SECRET", "hex:caffee").as[ByteVector]
     val valid = config("SESSION_VALID", "10 minutes").as[Duration]
-    val authType = config("AUTH_FIXED_USER", "false").as[Boolean].map {
+    val authType = config("AUTH_FIXED", "false").as[Boolean].map {
       case true  => AuthConfig.AuthenticationType.Fixed
       case false => AuthConfig.AuthenticationType.Internal
     }

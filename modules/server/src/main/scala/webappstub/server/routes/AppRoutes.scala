@@ -4,6 +4,7 @@ import cats.effect.*
 
 import webappstub.backend.Backend
 import webappstub.server.Config
+import webappstub.server.common.Responses
 import webappstub.server.context.ContextMiddleware
 import webappstub.server.routes.contacts.ContactRoutes
 import webappstub.server.routes.login.LoginRoutes
@@ -30,15 +31,15 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     makeWebjar("fi", Webjars.flagicons)
   )
 
-  val context = ContextMiddleware.forBackend[F](backend)
+  val context = ContextMiddleware.forBackend[F](config, backend)
   val uiConfig = UiConfig.fromConfig(config)
   val login = LoginRoutes[F](backend.login, config, uiConfig)
   val contacts = ContactRoutes.create[F](backend)
   val settings = SettingRoutes[F](config)
 
-  def routes: HttpRoutes[F] = Router(
+  def routes: HttpRoutes[F] = Router.define(
     "/assets" -> WebjarRoute[F](webjars).serve,
     "/login" -> context.optional(login.routes),
     "/settings" -> context.optional(settings.routes),
     "/contacts" -> context.securedOrRedirect(contacts.routes, uri"/app/login")
-  )
+  )(Responses.notFoundHtmlRoute)

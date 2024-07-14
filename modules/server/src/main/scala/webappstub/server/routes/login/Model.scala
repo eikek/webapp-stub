@@ -4,9 +4,9 @@ import cats.syntax.all.*
 
 import webappstub.backend.auth.UserPass
 import webappstub.common.model.*
-import htmx4s.http4s.util.ValidationDsl.*
 import webappstub.server.routes.login.LoginError.*
 
+import htmx4s.http4s.util.ValidationDsl.*
 import org.http4s.FormDataDecoder
 import org.http4s.FormDataDecoder.*
 import org.http4s.QueryParamDecoder

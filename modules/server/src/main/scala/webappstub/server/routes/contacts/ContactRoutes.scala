@@ -6,6 +6,7 @@ import cats.syntax.all.*
 import webappstub.backend.Backend
 import webappstub.common.model.*
 import webappstub.server.context.Context
+import webappstub.server.routes.Layout
 import webappstub.server.routes.contacts.Model.*
 import webappstub.server.routes.contacts.Model.ContactEditForm
 
@@ -15,7 +16,6 @@ import org.http4s.HttpRoutes
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
-import webappstub.server.routes.Layout
 
 final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
   def routes(ctx: Context.Authenticated): HttpRoutes[F] =
@@ -43,7 +43,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
       case GET -> Root / "new" =>
         Ok(views.editContactPage(ContactEditPage.empty))
 
-      case req @ POST -> Root / "contacts" / "new" =>
+      case req @ POST -> Root / "new" =>
         for {
           formInput <- req.as[ContactEditForm]
           result <- api.upsert(formInput, None)
@@ -51,7 +51,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
             _.fold(
               errs =>
                 Ok(views.editContactPage(ContactEditPage(None, formInput, errs.some))),
-              _ => SeeOther(Location(uri"/ui/contacts"))
+              _ => SeeOther(Location(uri"/app/contacts"))
             )
           )
         } yield resp
@@ -83,7 +83,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
             _.fold(
               errs =>
                 Ok(views.editContactPage(ContactEditPage(id.some, formInput, errs.some))),
-              _ => SeeOther(Location(uri"/ui/contacts"))
+              _ => SeeOther(Location(uri"/app/contacts"))
             )
           )
         } yield resp
@@ -100,7 +100,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
         for {
           found <- api.delete(id)
           resp <-
-            if (found) SeeOther(Location(uri"/ui/contacts"))
+            if (found) SeeOther(Location(uri"/app/contacts"))
             else NotFound(notFoundPage)
         } yield resp
 

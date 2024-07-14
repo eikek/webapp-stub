@@ -17,9 +17,8 @@ object Layout:
 
   private val sizes = attr("sizes")
 
-  def apply(titleStr: String, theme: UiTheme)(
-      content: TypedTag[String],
-      topBar: Option[TypedTag[String]] = None
+  def apply(titleStr: String, theme: UiTheme, topBar: Option[TypedTag[String]] = None)(
+      content: TypedTag[String]
   ) =
     doctype("html")(
       html(
@@ -78,7 +77,7 @@ object Layout:
       )
     )
 
-  def topNavBar(): TypedTag[String] =
+  def topNavBar: TypedTag[String] =
     div(
       cls := "top-0 fixed z-50 w-full flex flex-row justify-start shadow-sm h-12 bg-indigo-100 dark:bg-stone-900 text-gray-800 dark:text-stone-200 antialiased",
       a(
@@ -86,7 +85,7 @@ object Layout:
         attr.href := "/app/contacts",
         img(
           cls := "w-9 h-9 mr-2 block",
-          attr.src := "/app/assets/self/img/icon-dark.svg"
+          attr.src := "/app/assets/self/favicon/favicon-32x32.png"
         ),
         div(cls := "", "Webappstub")
       ),
@@ -100,7 +99,7 @@ object Layout:
       h2(cls := "text-2xl font-semibold my-2", "Resource not found!"),
       p("Sorry, this doesn't exist."),
       p(
-        a(cls := Styles.link, attr.href := "/ui/contacts", "Home")
+        a(cls := Styles.link, attr.href := "/app/contacts", "Home")
       )
     )
 
