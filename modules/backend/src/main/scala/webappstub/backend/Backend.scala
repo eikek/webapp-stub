@@ -13,6 +13,7 @@ import org.typelevel.otel4s.trace.Tracer
 trait Backend[F[_]]:
   def config: BackendConfig
   def login: LoginService[F]
+  def signup: SignupService[F]
   def contacts: ContactService[F]
 
 object Backend:
@@ -30,4 +31,5 @@ object Backend:
       val config = cfg
       val contacts = _contacts
       val login = LoginService(cfg.auth, accountRepo)
+      val signup = SignupService(cfg.signup, accountRepo)
     }

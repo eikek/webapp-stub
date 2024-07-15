@@ -10,6 +10,7 @@ import fs2.io.file.Path
 
 import webappstub.backend.BackendConfig
 import webappstub.backend.auth.AuthConfig
+import webappstub.backend.signup.{SignupConfig, SignupMode}
 import webappstub.common.model.Password
 import webappstub.store.PostgresConfig
 
@@ -73,8 +74,13 @@ object ConfigValues extends ConfigDecoders:
     (secret, valid, authType).mapN(AuthConfig.apply)
   }
 
+  val signup = {
+    val mode = config("SIGNUP_MODE", "closed").as[SignupMode]
+    mode.map(SignupConfig.apply)
+  }
+
   val backend =
-    (postgres, auth).mapN(BackendConfig.apply)
+    (postgres, auth, signup).mapN(BackendConfig.apply)
 
   val webConfig = {
     val name = config("WEB_APP_NAME", "Webappstub")

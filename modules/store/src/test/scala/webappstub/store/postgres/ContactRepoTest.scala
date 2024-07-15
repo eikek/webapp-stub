@@ -12,7 +12,12 @@ class ContactRepoTest extends CatsEffectSuite with PostgresTest:
   test("insert new contact"):
     contactRepoResource.use { repo =>
       val c =
-        NewContact(Name.unsafe("John", "Doe"), Some(Email.unsafe("jdoe@me.com")), None)
+        NewContact(
+          AccountId(1),
+          Name.unsafe("John", "Doe"),
+          Some(Email.unsafe("jdoe@me.com")),
+          None
+        )
       for
         id <- repo.insert(c)
         cc <- repo.findById(id)

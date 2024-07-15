@@ -9,3 +9,7 @@ final case class NewAccount(
 ):
   def withId(id: AccountId, created: Instant): Account =
     Account(id, state, login, password, created)
+
+object NewAccount:
+  def active(login: LoginName, pass: Password): NewAccount =
+    NewAccount(AccountState.Active, login, pass)

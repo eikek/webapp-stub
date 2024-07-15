@@ -7,6 +7,7 @@ import scala.concurrent.duration.Duration
 import cats.Show
 import cats.syntax.all.*
 
+import webappstub.backend.signup.SignupMode
 import webappstub.common.model.Password
 import webappstub.server.data.UiTheme
 
@@ -56,3 +57,6 @@ private trait ConfigDecoders:
     ConfigDecoder[String].emap("Duration")(s =>
       Either.catchNonFatal(Duration(s)).leftMap(_.getMessage)
     )
+
+  given ConfigDecoder[String, SignupMode] =
+    ConfigDecoder[String].emap("SignupMode")(SignupMode.fromString)

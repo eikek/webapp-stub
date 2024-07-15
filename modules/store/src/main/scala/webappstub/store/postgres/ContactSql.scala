@@ -1,8 +1,8 @@
 package webappstub.store.postgres
 
 import webappstub.common.model.*
-import webappstub.store.postgres.Codecs as c
 import webappstub.store.ContactQuery
+import webappstub.store.postgres.Codecs as c
 
 import skunk.*
 import skunk.codec.all.*

@@ -1,7 +1,6 @@
 package webappstub.server.routes.login
 
 import webappstub.server.context.Settings
-import webappstub.server.data.UiTheme
 import webappstub.server.routes.settings.Views.{languageDropdown, themeButton}
 import webappstub.server.routes.{Styles, UiConfig}
 
@@ -77,19 +76,17 @@ object View:
         cls := "mt-4 flex flex-row items-center space-x-4 py-2",
         languageDropdown(ctx.language, false),
         themeButton(ctx.theme)
-      )
-    )
-
-  def themeDropdown(selected: UiTheme): TypedTag[String] =
-    select(
-      attr.name := "theme",
-      UiTheme.values.toList.map { t =>
-        option(
-          attr.value := t.name,
-          Option.when(t == selected)(attr.selected := "selected"),
-          div(cls := "h-6 w-6", i(cls := t.fold("fa fa-sun", "fa fa-moon")))
+      ),
+      div(
+        cls := "text-sm",
+        "No account?",
+        a(
+          cls := s"ml-2 ${Styles.link}",
+          i(cls := "fa fa-user-plus mr-1"),
+          "Sign up",
+          attr.href := "/app/signup"
         )
-      }
+      )
     )
 
   def loginFailed(error: String): TypedTag[String] =

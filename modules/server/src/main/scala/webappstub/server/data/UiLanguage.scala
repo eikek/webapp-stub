@@ -3,7 +3,7 @@ package webappstub.server.data
 enum UiLanguage(val iso3: String, val iso2: String, val label: String):
   case English extends UiLanguage("eng", "gb", "English")
   case German extends UiLanguage("ger", "de", "Deutsch")
-  case French extends UiLanguage("fra", "fr", "Français")
+//  case French extends UiLanguage("fra", "fr", "Français")
 
 object UiLanguage:
   val all: List[UiLanguage] = UiLanguage.values.toList

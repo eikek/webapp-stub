@@ -1,13 +1,17 @@
-package webappstub.server.routes.login
+package webappstub.server.routes.signup
 
 import webappstub.server.data.UiLanguage
 
 final case class I18n(
     username: String,
     password: String,
+    passwordConfirm: String,
     loginPlaceholder: String,
     passwordPlaceholder: String,
-    loginButton: String
+    passwordConfirmPlaceholder: String,
+    submitButton: String,
+    inviteKey: String,
+    inviteKeyPlaceholder: String
 )
 
 object I18n:
@@ -19,15 +23,23 @@ object I18n:
   val en = I18n(
     username = "Username",
     password = "Password",
+    passwordConfirm = "Password (confirm)",
     loginPlaceholder = "Login",
     passwordPlaceholder = "Password",
-    loginButton = "Login"
+    passwordConfirmPlaceholder = "Password (confirm)",
+    inviteKey = "Invite Key",
+    inviteKeyPlaceholder = "Invite…",
+    submitButton = "Submit"
   )
 
   val de = I18n(
     username = "Benutzer",
     password = "Passwort",
+    passwordConfirm = "Passwort bestätigen",
     loginPlaceholder = "Benutzer",
     passwordPlaceholder = "Passwort",
-    loginButton = "Anmelden"
+    passwordConfirmPlaceholder = "Passwort bestätigen",
+    inviteKey = "Einladungs-Schlüssel",
+    inviteKeyPlaceholder = "Einladung…",
+    submitButton = "Absenden"
   )

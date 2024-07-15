@@ -46,6 +46,9 @@ object Codecs:
   val account: Codec[Account] =
     (accountId *: accountState *: loginName *: password *: instant).to[Account]
 
+  val inviteKey: Codec[InviteKey] =
+    c.varchar.eimap(InviteKey.fromString)(_.value)
+
   extension [A](self: Codec[A])
     def vimap[B](fa: A => ValidatedNel[String, B])(fb: B => A): Codec[B] =
       self.eimap(a => fa(a).toEither.leftMap(_.toList.mkString))(fb)

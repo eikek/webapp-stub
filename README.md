@@ -44,6 +44,7 @@ some basic functiality that is useful across all projcts.
 - basic site layout with a top bar
 - user authenication with password or "auto-user" mode (then some
   pre-defined user is logged in automatically)
+- user registration
 - a "version" route for getting version information
 - a http4s `ContextMiddleware` that is supposed to handle common
   request inputs, like authentication and settings (ui theme) and
@@ -60,8 +61,7 @@ details to serve this purpose:
 
 - Using htmx `hx-on` attribute to change css classes when hovering an element
 - Example skunk codecs for (nested) case classes
-- a very simple idea for i18n with scalatags and htmx
-- an idea for referring to page paths [TODO]
+- a simple idea for i18n with scalatags and htmx
 
 ## Nix
 

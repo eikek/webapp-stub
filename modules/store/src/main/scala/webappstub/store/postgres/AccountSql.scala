@@ -59,3 +59,13 @@ private object AccountSql:
     inner join "account_state" s on a.state_id = s.id
     where login_name = ${c.loginName} and s.name = ${c.accountState}
     """.query(c.account)
+
+  val deleteInviteKey: Command[InviteKey] =
+    sql"""delete from "invitation" where "key" = ${c.inviteKey}""".command
+
+  val deleteInviteKeysBefore: Command[Instant] =
+    sql"""delete from "invitation" where "created_at" < ${c.instant}""".command
+
+  val insertInvitationKey: Query[InviteKey, Long] =
+    sql"""insert into "invitation" ("key") values (${c.inviteKey})
+          returning id""".query(int8)

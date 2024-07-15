@@ -9,6 +9,7 @@ import webappstub.server.context.ContextMiddleware
 import webappstub.server.routes.contacts.ContactRoutes
 import webappstub.server.routes.login.LoginRoutes
 import webappstub.server.routes.settings.SettingRoutes
+import webappstub.server.routes.signup.SignupRoutes
 
 import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.WebjarRoute
@@ -34,12 +35,14 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   val context = ContextMiddleware.forBackend[F](config, backend)
   val uiConfig = UiConfig.fromConfig(config)
   val login = LoginRoutes[F](backend.login, config, uiConfig)
+  val signup = SignupRoutes[F](backend.signup, config, uiConfig)
   val contacts = ContactRoutes.create[F](backend)
   val settings = SettingRoutes[F](config)
 
   def routes: HttpRoutes[F] = Router.define(
     "/assets" -> WebjarRoute[F](webjars).serve,
     "/login" -> context.optional(login.routes),
+    "/signup" -> context.optional(signup.routes),
     "/settings" -> context.optional(settings.routes),
     "/contacts" -> context.securedOrRedirect(contacts.routes, uri"/app/login")
   )(Responses.notFoundHtmlRoute)
