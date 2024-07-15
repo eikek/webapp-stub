@@ -13,28 +13,43 @@ import htmx4s.http4s.util.ValidationDsl.*
 trait RoutesApi[F[_]]:
   def upsert(
       form: ContactEditForm,
+      owner: AccountId,
       id: Option[ContactId]
   ): F[Option[ContactValid[ContactId]]]
-  def checkMail(id: Option[ContactId], emailStr: String): F[ContactValid[Email]]
+  def checkMail(
+      id: Option[ContactId],
+      account: AccountId,
+      emailStr: String
+  ): F[ContactValid[Email]]
   def delete(id: ContactId): F[Boolean]
-  def findById(id: ContactId): F[Option[Contact]]
-  def search(query: Option[String], page: Option[Int]): F[List[Contact]]
-  def countAll: F[Long]
+  def findById(id: ContactId, account: AccountId): F[Option[Contact]]
+  def search(
+      account: AccountId,
+      query: Option[String],
+      page: Option[Int]
+  ): F[List[Contact]]
+  def countAll(account: AccountId): F[Long]
 
 object RoutesApi:
   def apply[F[_]: Sync](db: ContactService[F]): RoutesApi[F] =
     new RoutesApi[F]:
-      def search(query: Option[String], page: Option[Int]): F[List[Contact]] =
-        db.search(query, page)
-      def countAll: F[Long] = db.count
-      def findById(id: ContactId): F[Option[Contact]] = db.findById(id)
+      def search(
+          account: AccountId,
+          query: Option[String],
+          page: Option[Int]
+      ): F[List[Contact]] =
+        db.search(account, query, page)
+      def countAll(account: AccountId): F[Long] = db.count(account)
+      def findById(id: ContactId, account: AccountId): F[Option[Contact]] =
+        db.findById(id).map(_.filter(_.owner == account))
       def delete(id: ContactId): F[Boolean] = db.delete(id)
       def upsert(
           form: ContactEditForm,
+          owner: AccountId,
           id: Option[ContactId]
       ): F[Option[ContactValid[ContactId]]] =
         form
-          .toContact(id.getOrElse(ContactId.unknown))
+          .toContact(id.getOrElse(ContactId.unknown), owner)
           .fold(
             _.invalid.some.pure[F],
             c =>
@@ -45,13 +60,17 @@ object RoutesApi:
               }
           )
 
-      def checkMail(id: Option[ContactId], emailStr: String): F[ContactValid[Email]] =
+      def checkMail(
+          id: Option[ContactId],
+          account: AccountId,
+          emailStr: String
+      ): F[ContactValid[Email]] =
         Email(emailStr)
           .keyed(ContactError.Key.Email)
           .fold(
             _.invalid.pure[F],
             email =>
-              db.findByEmail(email).map {
+              db.findByEmail(account, email).map {
                 case Some(c) if id.forall(_ != c.id) => ContactError.emailExists
                 case _                               => email.valid
               }

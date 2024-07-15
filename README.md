@@ -42,8 +42,8 @@ some basic functiality that is useful across all projcts.
   - scribe for logging
 - dark/light ui theme with tailwind, controlled via a cookie
 - basic site layout with a top bar
-- user authenication with password or "auto-user" mode (then no login
-  is necessary, acts as if no authentication is implemented)
+- user authenication with password or "auto-user" mode (then some
+  pre-defined user is logged in automatically)
 - a "version" route for getting version information
 - a http4s `ContextMiddleware` that is supposed to handle common
   request inputs, like authentication and settings (ui theme) and
@@ -51,6 +51,17 @@ some basic functiality that is useful across all projcts.
 - github actions for doing ci and release zips to github release page
 - release-drafter setup
 - nix dev and ci setup
+
+### Included Code Examples
+
+As I tend to forget details when not using it regularily, it is nice
+to come to some examples to refresh memory. Here are some included
+details to serve this purpose:
+
+- Using htmx `hx-on` attribute to change css classes when hovering an element
+- Example skunk codecs for (nested) case classes
+- a very simple idea for i18n with scalatags and htmx
+- an idea for referring to page paths [TODO]
 
 ## Nix
 

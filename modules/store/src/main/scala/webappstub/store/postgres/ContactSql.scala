@@ -2,6 +2,7 @@ package webappstub.store.postgres
 
 import webappstub.common.model.*
 import webappstub.store.postgres.Codecs as c
+import webappstub.store.ContactQuery
 
 import skunk.*
 import skunk.codec.all.*
@@ -10,8 +11,8 @@ import skunk.implicits.*
 private object ContactSql:
 
   val insert: Query[NewContact, ContactId] =
-    sql"""insert into contact (first_name,last_name,email,phone)
-    values (${c.name}, ${c.email.opt}, ${c.phoneNumber.opt})
+    sql"""insert into contact (owner_id,first_name,last_name,email,phone)
+    values (${c.accountId}, ${c.name}, ${c.email.opt}, ${c.phoneNumber.opt})
     returning id
     """
       .query(c.contactId)
@@ -25,10 +26,10 @@ private object ContactSql:
       last_name = ${varchar},
       email = ${c.email.opt},
       phone = ${c.phoneNumber.opt}
-    where id = ${c.contactId}
+    where id = ${c.contactId} and owner_id = ${c.accountId}
     """.command
       .contramap[(ContactId, NewContact)] { case (id, nc) =>
-        nc.name.first *: nc.name.last *: nc.email *: nc.phone *: id *: EmptyTuple
+        nc.name.first *: nc.name.last *: nc.email *: nc.phone *: id *: nc.owner *: EmptyTuple
       }
 
   val delete: Command[ContactId] =
@@ -36,10 +37,11 @@ private object ContactSql:
     delete from "contact" where "id" = ${c.contactId}
     """.command
 
-  val countAll: Query[skunk.Void, Long] =
-    sql"""select count(id) from "contact"""".query(int8)
+  val countAll: Query[AccountId, Long] =
+    sql"""select count(id) from "contact" where owner_id = ${c.accountId}""".query(int8)
 
-  private val contactCols = sql"""c.id, c.first_name, c.last_name, c.email, c.phone"""
+  private val contactCols =
+    sql"""c.id, c.owner_id, c.first_name, c.last_name, c.email, c.phone"""
 
   def findById: Query[ContactId, Contact] =
     sql"""
@@ -48,27 +50,32 @@ private object ContactSql:
     where c.id = ${c.contactId}
     """.query(c.contact)
 
-  def findByEmail: Query[Email, Contact] =
+  def findByEmail: Query[(AccountId, Email), Contact] =
     sql"""
     select $contactCols
     from "contact" c
-    where c.email = ${c.email}
+    where c.owner_id = ${c.accountId} and c.email = ${c.email}
     """.query(c.contact)
 
-  def findAll: Query[(Long, Long), Contact] =
+  def findAll: Query[ContactQuery, Contact] =
     sql"""
     select $contactCols
     from "contact" c
+    where owner_id = ${c.accountId}
     order by c.last_name, c.first_name
     offset $int8 limit $int8
     """
       .query(c.contact)
+      .contramap[ContactQuery] { case ContactQuery(owner, _, limit, off) =>
+        owner *: off *: limit *: EmptyTuple
+      }
 
-  def findAllContains: Query[(String, Long, Long), Contact] =
+  def findAllContains: Query[ContactQuery, Contact] =
     sql"""
     select $contactCols
     from "contact" c
-    where lower(c.first_name) like $varchar or
+    where owner_id = ${c.accountId}
+      lower(c.first_name) like $varchar or
       lower(c.last_name) like $varchar or
       lower(c.email) like $varchar or
       lower(c.phone) like $varchar
@@ -76,6 +83,6 @@ private object ContactSql:
     offset $int8 limit $int8
     """
       .query(c.contact)
-      .contramap[(String, Long, Long)] { case (q, off, limit) =>
-        q *: q *: q *: q *: off *: limit *: EmptyTuple
+      .contramap[ContactQuery] { case ContactQuery(owner, q, limit, off) =>
+        owner *: q *: q *: q *: q *: off *: limit *: EmptyTuple
       }

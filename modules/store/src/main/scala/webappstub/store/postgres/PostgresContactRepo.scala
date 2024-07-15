@@ -4,26 +4,18 @@ import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.common.model.*
-import webappstub.store.ContactRepo
+import webappstub.store.{ContactQuery, ContactRepo}
 
 import skunk.Session
 
 final class PostgresContactRepo[F[_]: Sync](session: Resource[F, Session[F]])
     extends ContactRepo[F]:
-  def selectContacts(
-      contains: Option[String],
-      limit: Long,
-      offset: Long
-  ): F[List[Contact]] =
-    contains match {
-      case Some(q) =>
-        session.use(_.execute(ContactSql.findAllContains)((q, offset, limit)))
-      case None =>
-        session.use(_.execute(ContactSql.findAll)(offset -> limit))
-    }
+  def selectContacts(q: ContactQuery): F[List[Contact]] =
+    if (q.query.isEmpty) session.use(_.execute(ContactSql.findAll)(q))
+    else session.use(_.execute(ContactSql.findAllContains)(q))
 
-  def findByEmail(email: Email): F[Option[Contact]] =
-    session.use(_.option(ContactSql.findByEmail)(email))
+  def findByEmail(account: AccountId, email: Email): F[Option[Contact]] =
+    session.use(_.option(ContactSql.findByEmail)(account -> email))
 
   def findById(id: ContactId): F[Option[Contact]] =
     session.use(_.option(ContactSql.findById)(id))
@@ -37,5 +29,5 @@ final class PostgresContactRepo[F[_]: Sync](session: Resource[F, Session[F]])
   def delete(id: ContactId): F[Boolean] =
     session.use(_.execute(ContactSql.delete)(id)).as(true)
 
-  def countAll: F[Long] =
-    session.use(_.unique(ContactSql.countAll))
+  def countAll(account: AccountId): F[Long] =
+    session.use(_.unique(ContactSql.countAll)(account))

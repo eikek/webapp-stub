@@ -30,7 +30,7 @@ object Model:
       email: Option[String],
       phone: Option[String]
   ):
-    def toContact(id: ContactId): ContactValid[Contact] =
+    def toContact(id: ContactId, owner: AccountId): ContactValid[Contact] =
       val fn = firstName.asNonEmpty(Key.FirstName, "first name is required")
       val ln = lastName.asNonEmpty(Key.LastName, "last name is required")
       val name =
@@ -38,7 +38,8 @@ object Model:
       val em = email.traverse(Email(_).keyed(Key.Email))
       val ph = phone.traverse(PhoneNumber(_).keyed(Key.Phone))
       val vid = id.valid[Key, String]
-      (vid, name, em, ph).mapN(Contact.apply)
+      val oid = owner.valid[Key, String]
+      (vid, oid, name, em, ph).mapN(Contact.apply)
 
   object ContactEditForm:
     given FormDataDecoder[ContactEditForm] =

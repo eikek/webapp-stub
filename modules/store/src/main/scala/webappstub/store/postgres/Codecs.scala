@@ -28,9 +28,6 @@ object Codecs:
       .to[(String, String)]
       .vimap(t => Name.create(t._1, t._2))(n => (n.first, n.last))
 
-  val contact: Codec[Contact] =
-    (contactId *: name *: email.opt *: phoneNumber.opt).to[Contact]
-
   val accountId: Codec[AccountId] =
     c.int8.imap(AccountId(_))(_.value)
 
@@ -42,6 +39,9 @@ object Codecs:
 
   val accountState: Codec[AccountState] =
     c.varchar.eimap(AccountState.fromString)(_.name)
+
+  val contact: Codec[Contact] =
+    (contactId *: accountId *: name *: email.opt *: phoneNumber.opt).to[Contact]
 
   val account: Codec[Account] =
     (accountId *: accountState *: loginName *: password *: instant).to[Account]

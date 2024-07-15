@@ -2,6 +2,7 @@ package webappstub.common.model
 
 final case class Contact(
     id: ContactId,
+    owner: AccountId,
     name: Name,
     email: Option[Email],
     phone: Option[PhoneNumber]
@@ -12,4 +13,4 @@ final case class Contact(
       email.exists(_.contains(s)) ||
       phone.exists(_.contains(s))
 
-  def withoutId: NewContact = NewContact(name, email, phone)
+  def withoutId: NewContact = NewContact(owner, name, email, phone)

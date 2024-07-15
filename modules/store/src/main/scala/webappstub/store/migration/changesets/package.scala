@@ -2,7 +2,7 @@ package webappstub.store.migration
 
 package object changesets {
   val all: Seq[ChangeSet] = List(
-    Contact.get,
-    Account.get
+    Account.get,
+    Contact.get
   )
 }
