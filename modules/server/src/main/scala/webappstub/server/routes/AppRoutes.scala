@@ -7,6 +7,7 @@ import webappstub.server.Config
 import webappstub.server.common.Responses
 import webappstub.server.context.ContextMiddleware
 import webappstub.server.routes.contacts.ContactRoutes
+import webappstub.server.routes.invite.InviteRoutes
 import webappstub.server.routes.login.LoginRoutes
 import webappstub.server.routes.settings.SettingRoutes
 import webappstub.server.routes.signup.SignupRoutes
@@ -27,6 +28,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     // refers to our own js and css stuff, version is not needed
     Webjar("self")("webappstub-server", "", ""),
     makeWebjar("htmx", Webjars.htmxorg, "dist"),
+    makeWebjar("htmx-rt", Webjars.htmxextresponsetargets),
     makeWebjar("fa", Webjars.fortawesome__fontawesomefree),
     makeWebjar("fi", Webjars.flagicons)
   )
@@ -35,6 +37,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   val uiConfig = UiConfig.fromConfig(config)
   val login = LoginRoutes[F](backend.login, config, uiConfig)
   val signup = SignupRoutes[F](backend.signup, config, uiConfig)
+  val invite = InviteRoutes[F](backend.signup)
   val contacts = ContactRoutes.create[F](backend)
   val settings = SettingRoutes[F](config)
 
@@ -42,6 +45,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     "/assets" -> WebjarRoute[F](webjars).serve,
     "/login" -> context.optional(login.routes),
     "/signup" -> context.optional(signup.routes),
+    "/create-invite" -> context.securedOrRedirect(invite.routes, uri"/app/login"),
     "/settings" -> context.optional(settings.routes),
     "/contacts" -> context.securedOrRedirect(contacts.routes, uri"/app/login")
   )(Responses.notFoundHtmlRoute)

@@ -7,3 +7,7 @@ enum SignupResult:
   case LoginExists
   case SignupClosed
   case InvalidKey
+
+  def toEither: Either[SignupResult, SignupResult] = this match
+    case a: Success => Right(a)
+    case b          => Left(b)

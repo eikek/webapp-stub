@@ -2,14 +2,12 @@ package webappstub.server.routes.login
 
 import webappstub.server.context.Settings
 import webappstub.server.routes.settings.Views.{languageDropdown, themeButton}
-import webappstub.server.routes.{Styles, UiConfig}
+import webappstub.server.routes.{Components, Styles, UiConfig}
 
 import htmx4s.scalatags.Bundle.*
 import scalatags.Text.TypedTag
 
-object View:
-  private val hxTarget403 = attr("hx-target-error")
-
+object View extends Components:
   def view(cfg: UiConfig, ctx: Settings): TypedTag[String] =
     val texts = I18n(ctx.language)
     div(
@@ -25,7 +23,7 @@ object View:
         form(
           cls := "",
           attr.method := "POST",
-          hxTarget403 := "#error-message",
+          hxTargetError := "#error-message",
           attr.hxPost := "",
           attr.autocomplete := false,
           div(
@@ -79,6 +77,7 @@ object View:
       ),
       div(
         cls := "text-sm",
+        attr.hxBoost := true,
         "No account?",
         a(
           cls := s"ml-2 ${Styles.link}",

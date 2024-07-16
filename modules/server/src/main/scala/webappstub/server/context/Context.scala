@@ -6,6 +6,7 @@ import webappstub.common.model.AccountId
 trait Context:
   def settings: Settings
   def toOptional: Context.OptionalAuth
+  def isAuthenticated: Boolean = toOptional.token.isDefined
 
 object Context:
 

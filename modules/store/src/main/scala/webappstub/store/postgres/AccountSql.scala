@@ -63,9 +63,17 @@ private object AccountSql:
   val deleteInviteKey: Command[InviteKey] =
     sql"""delete from "invitation" where "key" = ${c.inviteKey}""".command
 
+  val deleteInviteKey2: Query[InviteKey, InviteRecord] =
+    sql"""delete from "invitation" where "key" = ${c.inviteKey} returning id,key,created_at"""
+      .query(c.inviteRecord)
+
   val deleteInviteKeysBefore: Command[Instant] =
     sql"""delete from "invitation" where "created_at" < ${c.instant}""".command
 
-  val insertInvitationKey: Query[InviteKey, Long] =
+  val insertNewInvitationKey: Query[InviteKey, Long] =
     sql"""insert into "invitation" ("key") values (${c.inviteKey})
           returning id""".query(int8)
+
+  val insertInvitation: Command[InviteRecord] =
+    sql"""insert into "invitation" ("id", "key", "created_at") values ($int8, ${c.inviteKey}, ${c.instant})""".command
+      .to[InviteRecord]

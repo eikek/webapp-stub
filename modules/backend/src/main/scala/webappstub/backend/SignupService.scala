@@ -39,16 +39,21 @@ object SignupService:
         req.inviteKey match
           case None => SignupResult.InvalidKey.pure[F]
           case Some(key) =>
-            repo.deleteInviteKey(key).flatMap {
-              case false => SignupResult.InvalidKey.pure[F]
-              case true  => createAccount(repo, req)
-            }
+            repo
+              .withInvite(key) {
+                case None    => Left(SignupResult.InvalidKey).pure[F]
+                case Some(_) => createAccount(repo, req).map(_.toEither)
+              }
+              .map(_.fold(identity, identity))
 
       def createInviteKey(serverPassword: Password): F[Option[InviteKey]] =
         if (serverKey != serverPassword) None.pure[F]
         else repo.createInviteKey.map(_.some)
 
-  private def createAccount[F[_]: Sync](repo: AccountRepo[F], req: SignupRequest) =
+  private def createAccount[F[_]: Sync](
+      repo: AccountRepo[F],
+      req: SignupRequest
+  ): F[SignupResult] =
     repo
       .insert(NewAccount.active(req.login, PasswordCrypt.crypt(req.password)))
       .map(_.fold(SignupResult.LoginExists)(SignupResult.Success(_)))

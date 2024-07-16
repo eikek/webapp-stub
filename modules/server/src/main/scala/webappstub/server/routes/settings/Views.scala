@@ -8,7 +8,7 @@ import htmx4s.scalatags.Bundle.*
 import io.bullet.borer.Json
 import scalatags.Text.TypedTag
 
-object Views:
+object Views extends Components:
 
   def themeButton(selected: UiTheme): TypedTag[String] =
     a(
@@ -28,7 +28,7 @@ object Views:
         cls := s"py-2 pl-2 pr-5 rounded-lg inline-flex items-center ${Styles.borderBtn} ${Styles.focusRingBtn} ${Styles.basicBtnBg} ${Styles.basicBtnHover} text-sm",
         attr.hxGet := s"/app/settings/language?$qopen",
         attr.hxTarget := "#language-dropdown",
-        span(cls := "mr-2", Components.languageFlag(selected)),
+        span(cls := "mr-2", languageFlag(selected)),
         span(cls := "mr-2", selected.label),
         div(
           cls := "absolute right-2",
@@ -42,7 +42,7 @@ object Views:
             attr.hxPost := "/app/settings/language",
             attr.hxVals := Json.encode(Map("language" -> lang.iso3)).toUtf8String,
             cls := s"px-1 py-1 flex ${Styles.basicBtnHover}",
-            span(cls := "mr-2", Components.languageFlag(lang)),
+            span(cls := "mr-2", languageFlag(lang)),
             span(cls := "mr-2", lang.label)
           )
         }

@@ -12,6 +12,7 @@ import webappstub.server.routes.{Layout, UiConfig}
 
 import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.headers.HxLocation
+import htmx4s.http4s.headers.HxRedirect
 import org.http4s.HttpRoutes
 import org.http4s.headers.Location
 import org.http4s.implicits.*
@@ -35,12 +36,7 @@ final class LoginRoutes[F[_]: Async](
         in <- req.as[Model.UserPasswordForm]
         result <- api.doLogin(in)
         resp <- result.fold(
-          errs =>
-            BadRequest(
-              View.loginFailed(
-                errs.errors.toList.flatMap(_.messages.toList).mkString(", ")
-              )
-            ),
+          errs => BadRequest(View.loginFailed(errs.mkString(", "))),
           _.fold(
             Forbidden(View.loginFailed("Authentication failed")),
             token => {
@@ -54,4 +50,11 @@ final class LoginRoutes[F[_]: Async](
           )
         )
       yield resp
+
+    case DELETE -> Root =>
+      NoContent()
+        .map(
+          _.removeCookie(WebappstubAuth.cookieName)
+            .putHeaders(HxRedirect(uri"/app/login"))
+        )
   }

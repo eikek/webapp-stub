@@ -12,3 +12,6 @@ trait AccountRepo[F[_]]:
   def createInviteKey: F[InviteKey]
   def deleteInviteKeys(fromBefore: Instant): F[Long]
   def deleteInviteKey(key: InviteKey): F[Boolean]
+  def withInvite[A, B](key: InviteKey)(
+      f: Option[InviteKey] => F[Either[A, B]]
+  ): F[Either[A, B]]

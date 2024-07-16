@@ -111,13 +111,18 @@ object ContextMiddleware:
           .apply(Kleisli(req => inner(req.context)(req.req).withOptAuthCookie(req)))
       }
 
+      // routes may override the auth cookie, only add if not already present
+      private def addAuthCookie(cookie: ResponseCookie, resp: Response[F]) =
+        if (resp.cookies.exists(_.name == WebappstubAuth.cookieName)) resp
+        else resp.addCookie(cookie)
+
       extension (self: OptionT[F, Response[F]])
         def withAuthCookie(
             req: ContextRequest[F, Context.Authenticated]
         ): OptionT[F, Response[F]] =
           val baseUrl = ClientRequestInfo.getBaseUrl(cfg, req.req)
           val cookie = WebappstubAuth(req.context.token.asString).asCookie(baseUrl)
-          self.map(_.addCookie(cookie))
+          self.map(addAuthCookie(cookie, _))
 
         def withOptAuthCookie(
             req: ContextRequest[F, Context.OptionalAuth]
@@ -127,5 +132,6 @@ object ContextMiddleware:
             case Some(token) =>
               val baseUrl = ClientRequestInfo.getBaseUrl(cfg, req.req)
               val cookie = WebappstubAuth(token.asString).asCookie(baseUrl)
-              self.map(_.addCookie(cookie))
+              self.map(addAuthCookie(cookie, _))
+
     }

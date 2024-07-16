@@ -1,5 +1,6 @@
 package webappstub.server.routes
 
+import webappstub.server.context.Context
 import webappstub.server.data.UiTheme
 
 import htmx4s.scalatags.Bundle.*
@@ -31,7 +32,7 @@ object Layout:
             attr.content := "width=device-width, initial-scale=1, user-scalable=yes"
           ),
           script(attr.src := "/app/assets/htmx/htmx.min.js"),
-          script(attr.src := "/app/assets/htmx/ext/response-targets.js"),
+          script(attr.src := "/app/assets/htmx-rt/response-targets.js"),
           link(attr.href := "/app/assets/fa/css/all.min.css", attr.rel := "stylesheet"),
           link(
             attr.href := "/app/assets/fi/css/flag-icons.min.css",
@@ -77,7 +78,7 @@ object Layout:
       )
     )
 
-  def topNavBar: TypedTag[String] =
+  def topNavBar(ctx: Context): TypedTag[String] =
     div(
       cls := "top-0 fixed z-50 w-full flex flex-row justify-start shadow-sm h-12 bg-indigo-100 dark:bg-stone-900 text-gray-800 dark:text-stone-200 antialiased",
       a(
@@ -90,7 +91,14 @@ object Layout:
         div(cls := "", "Webappstub")
       ),
       div(
-        cls := "flex flex-grow justify-end"
+        cls := "flex flex-grow justify-end",
+        Option.when(ctx.isAuthenticated) {
+          a(
+            cls := "inline-flex font-bold hover:bg-indigo-200 dark:hover:bg-stone-800 items-center px-4",
+            attr.hxDelete := "/app/login",
+            i(cls := "fa fa-right-from-bracket")
+          )
+        }
       )
     )
 

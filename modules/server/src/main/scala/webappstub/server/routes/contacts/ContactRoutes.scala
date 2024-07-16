@@ -31,6 +31,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
               Ok(views.contactTable(result, p.getOrElse(1))),
               Ok(
                 views.contactListPage(
+                  ctx,
                   ContactListPage(result, q.filter(_.nonEmpty), p.getOrElse(1))
                 )
               )
@@ -41,7 +42,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
         api.countAll(ctx.account).flatMap(n => Ok(views.countSnippet(n)))
 
       case GET -> Root / "new" =>
-        Ok(views.editContactPage(ContactEditPage.empty))
+        Ok(views.editContactPage(ctx, ContactEditPage.empty))
 
       case req @ POST -> Root / "new" =>
         for {
@@ -50,7 +51,9 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           resp <- result.fold(Ok(notFoundPage))(
             _.fold(
               errs =>
-                Ok(views.editContactPage(ContactEditPage(None, formInput, errs.some))),
+                Ok(
+                  views.editContactPage(ctx, ContactEditPage(None, formInput, errs.some))
+                ),
               _ => SeeOther(Location(uri"/app/contacts"))
             )
           )
@@ -61,7 +64,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           c <- api.findById(id, ctx.account)
           view = c
             .map(ContactShowPage.apply)
-            .fold(notFoundPage)(views.showContactPage)
+            .fold(notFoundPage)(views.showContactPage(ctx, _))
           resp <- c.fold(NotFound(view))(_ => Ok(view))
         } yield resp
 
@@ -70,7 +73,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           contact <- api.findById(id, ctx.account)
           form = contact.map(ContactEditForm.from)
           view = form.fold(notFoundPage)(c =>
-            views.editContactPage(ContactEditPage(id.some, c, None))
+            views.editContactPage(ctx, ContactEditPage(id.some, c, None))
           )
           resp <- contact.fold(NotFound(view))(_ => Ok(view))
         } yield resp
@@ -82,7 +85,10 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           resp <- result.fold(Ok(notFoundPage))(
             _.fold(
               errs =>
-                Ok(views.editContactPage(ContactEditPage(id.some, formInput, errs.some))),
+                Ok(
+                  views
+                    .editContactPage(ctx, ContactEditPage(id.some, formInput, errs.some))
+                ),
               _ => SeeOther(Location(uri"/app/contacts"))
             )
           )
@@ -93,7 +99,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           ids <- req.as[SelectedIds]
           _ <- ids.selectedId.traverse(api.delete)
           all <- api.search(ctx.account, None, None)
-          resp <- Ok(views.contactListPage(ContactListPage(all, None, 1)))
+          resp <- Ok(views.contactListPage(ctx, ContactListPage(all, None, 1)))
         } yield resp
 
       case DELETE -> Root / Params.ContactId(id) =>

@@ -3,6 +3,7 @@ package webappstub.server.routes.contacts
 import cats.syntax.all.*
 
 import webappstub.common.model.*
+import webappstub.server.context.Context
 import webappstub.server.data.UiTheme
 import webappstub.server.routes.Layout
 import webappstub.server.routes.Styles
@@ -28,16 +29,24 @@ final class Views(theme: UiTheme):
       div(
         cls := "flex flex-row items-center space-x-2 mt-4",
         attr.hxBoost := true,
-        a(cls := Styles.btn, attr.href := s"/app/contacts/${c.id}/edit", "Edit"),
-        a(cls := Styles.btn, attr.href := "/app/contacts", "Back")
+        a(
+          cls := s"${Styles.btn} text-sm rounded-xl",
+          attr.href := s"/app/contacts/${c.id}/edit",
+          "Edit"
+        ),
+        a(
+          cls := s"${Styles.btn} text-sm rounded-xl",
+          attr.href := "/app/contacts",
+          "Back"
+        )
       )
     )
 
   def countSnippet(n: Long): TypedTag[String] =
     span(cls := "ml-2 text-sm", s"$n total contacts")
 
-  def showContactPage(m: ContactShowPage) =
-    Layout(m.contact.fullName, theme, Layout.topNavBar.some)(
+  def showContactPage(ctx: Context, m: ContactShowPage) =
+    Layout(m.contact.fullName, theme, Layout.topNavBar(ctx).some)(
       div(
         cls := "container mx-auto mt-2",
         showContact(m.contact)
@@ -162,9 +171,9 @@ final class Views(theme: UiTheme):
       )
     )
 
-  def editContactPage(m: ContactEditPage) =
+  def editContactPage(ctx: Context, m: ContactEditPage) =
     val title = m.fullName.map(n => s"Edit $n").getOrElse("Create New")
-    Layout(title, theme, Layout.topNavBar.some)(
+    Layout(title, theme, Layout.topNavBar(ctx).some)(
       div(
         cls := "container mx-auto mt-2",
         h2(cls := "text-xl font-bold mb-2", title),
@@ -173,8 +182,8 @@ final class Views(theme: UiTheme):
       )
     )
 
-  def contactListPage(m: ContactListPage): doctype =
-    Layout("Contact Search", theme, Layout.topNavBar.some)(
+  def contactListPage(ctx: Context, m: ContactListPage): doctype =
+    Layout("Contact Search", theme, Layout.topNavBar(ctx).some)(
       div(
         cls := "flex flex-col container mx-auto",
         div(
@@ -274,8 +283,16 @@ final class Views(theme: UiTheme):
             td(
               cls := "actions flex flex-row items-center justify-end space-x-2 text-sm invisible",
               attr.hxBoost := true,
-              a(cls := Styles.btn, attr.href := s"/app/contacts/${c.id}/edit", "Edit"),
-              a(cls := Styles.btn, attr.href := s"/app/contacts/${c.id}", "View")
+              a(
+                cls := s"${Styles.btn} text-sm rounded-xl",
+                attr.href := s"/app/contacts/${c.id}/edit",
+                "Edit"
+              ),
+              a(
+                cls := s"${Styles.btn} text-sm rounded-xl",
+                attr.href := s"/app/contacts/${c.id}",
+                "View"
+              )
             )
           )
         ),

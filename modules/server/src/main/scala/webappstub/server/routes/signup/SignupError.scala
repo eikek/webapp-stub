@@ -12,7 +12,6 @@ object SignupError:
     case PasswordConfirm
     case Invite
     case Default
-    case ServerSecret
 
 type Errors = ValidationErrors[SignupError.Key, String]
 type SignupValid[A] = Validated[Errors, A]

@@ -11,7 +11,7 @@ final case class WebappstubAuth(token: String):
 
 object WebappstubAuth:
   val name: CIString = CIString("Webappstub-Auth")
-  private val cookieName = "webappstub_auth"
+  val cookieName = "webappstub_auth"
 
   def parse(value: String): ParseResult[WebappstubAuth] =
     if (value.isEmpty) ParseResult.fail("Empty auth token", "Empty auth token")

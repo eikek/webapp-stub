@@ -44,7 +44,7 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
   def createInviteKey: F[InviteKey] =
     Random.scalaUtilRandom[F].flatMap(_.nextBytes(32)).flatMap { bytes =>
       val key = InviteKey.unsafeFromString(ByteVector.view(bytes).toBase58)
-      session.use(_.unique(AccountSql.insertInvitationKey)(key)).as(key)
+      session.use(_.unique(AccountSql.insertNewInvitationKey)(key)).as(key)
     }
 
   def deleteInviteKeys(fromBefore: Instant): F[Long] =
@@ -57,4 +57,17 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
     session.inTx(_.execute(AccountSql.deleteInviteKey)(key)).map {
       case Completion.Delete(n) => n == 1
       case _                    => false
+    }
+
+  def withInvite[A, B](key: InviteKey)(
+      f: Option[InviteKey] => F[Either[A, B]]
+  ): F[Either[A, B]] =
+    session.inTx(_.option(AccountSql.deleteInviteKey2)(key)).flatMap {
+      case None => f(None)
+      case Some(r) =>
+        f(Some(key)).flatMap {
+          case b @ Right(_) => b.pure[F]
+          case a @ Left(_) =>
+            session.use(_.execute(AccountSql.insertInvitation)(r)).as(a)
+        }
     }
