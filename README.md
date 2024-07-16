@@ -52,6 +52,7 @@ some basic functiality that is useful across all projcts.
 - github actions for doing ci and release zips to github release page
 - release-drafter setup
 - nix dev and ci setup
+- some unit tests using random postgres databases
 
 ### Included Code Examples
 
