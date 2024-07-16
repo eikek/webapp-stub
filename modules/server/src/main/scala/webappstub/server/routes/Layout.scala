@@ -96,6 +96,7 @@ object Layout:
 
   private def notFound =
     div(
+      cls := "container mx-auto mt-2",
       h2(cls := "text-2xl font-semibold my-2", "Resource not found!"),
       p("Sorry, this doesn't exist."),
       p(

@@ -17,6 +17,7 @@ object View:
 
   object Id:
     val signupForm = "signup-form"
+    val createInviteForm = "create-invite-form"
 
   def view(
       cfg: UiConfig,
@@ -25,7 +26,7 @@ object View:
       errors: Option[Errors]
   ): TypedTag[String] =
     div(
-      attr.id := "signup-form",
+      attr.id := Id.signupForm,
       cls := s"md:h-screen-12 flex flex-col items-center justify-center items-center w-full ${Styles.content}",
       attr.hxExt := "response-targets",
       div(
@@ -66,7 +67,6 @@ object View:
       hxTarget400 := "this",
       hxTarget422 := "#error-message",
       attr.hxPost := "",
-      attr.id := Id.signupForm,
       attr.autocomplete := false,
       div(
         cls := "flex flex-col mt-6",
@@ -180,4 +180,72 @@ object View:
         case SignupResult.InvalidKey   => "Invalid invitation key"
         case SignupResult.SignupClosed => "Signup is closed"
         case SignupResult.LoginExists  => "Login is already taken"
+    )
+
+  def createInvite(ctx: Settings, model: Model.CreateInvitePage) =
+    val texts = I18n(ctx.language)
+    val target = s"#${Id.createInviteForm}"
+    div(
+      attr.id := Id.createInviteForm,
+      cls := s"md:h-screen-12 flex flex-col items-center justify-center items-center w-full ${Styles.content}",
+      div(
+        cls := s"flex flex-col px-2 sm:px-4 py-4 rounded-md min-w-full ${Styles.boxMd}",
+        div(
+          cls := "self-center",
+          h2(cls := "text-2xl font-bold mx-auto", s"Create Invite Keys")
+        ),
+        form(
+          cls := "",
+          attr.method := "POST",
+          attr.hxPost := "",
+          attr.hxTarget := target,
+          hxTarget400 := target,
+          hxTarget422 := target,
+          attr.autocomplete := false,
+          div(
+            cls := "flex flex-col mt-6",
+            label(
+              attr.`for` := "secret",
+              cls := Styles.inputLabel,
+              "Server Secret"
+            ),
+            div(
+              cls := "relative",
+              div(
+                cls := Styles.inputIcon,
+                i(cls := "fa fa-lock-open")
+              ),
+              input(
+                attr.`type` := "text",
+                attr.name := "secret",
+                attr.autocomplete := false,
+                cls := s"pl-10 pr-4 py-2 rounded-lg ${Styles.textInput}",
+                attr.value := model.form.secret
+              )
+            ),
+            fieldErrors(Key.ServerSecret, model.errors)
+          ),
+          div(
+            cls := "flex flex-col my-3",
+            button(
+              attr.`type` := "submit",
+              cls := Styles.primaryButton,
+              texts.submitButton
+            )
+          )
+        ),
+        model.key.map { k =>
+          div(
+            cls := "flex flex-col",
+            div(
+              cls := s"mx-2 my-2 ${Styles.successMessage}",
+              k.value
+            ),
+            div(
+              cls := "my-2 mx-2",
+              "Give this key to someone so they can register. Each key can only be used once."
+            )
+          )
+        }
+      )
     )

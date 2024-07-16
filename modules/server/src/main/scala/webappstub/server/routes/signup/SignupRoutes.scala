@@ -10,10 +10,13 @@ import webappstub.server.context.Context
 import webappstub.server.routes.{Layout, UiConfig}
 
 import htmx4s.http4s.Htmx4sDsl
+import htmx4s.http4s.util.ValidationErrors
 import org.http4s.HttpRoutes
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
+
+import SignupError.Key
 
 final class SignupRoutes[F[_]: Async](
     signup: SignupService[F],
@@ -29,6 +32,13 @@ final class SignupRoutes[F[_]: Async](
       Ok(
         Layout("Signup", ctx.settings.theme)(
           View.view(uiCfg, ctx.settings, signupCfg.mode, None)
+        )
+      )
+
+    case req @ GET -> Root / "create-invite" =>
+      Ok(
+        Layout("Create Invite", ctx.settings.theme)(
+          View.createInvite(ctx.settings, Model.CreateInvitePage())
         )
       )
 
@@ -48,4 +58,31 @@ final class SignupRoutes[F[_]: Async](
         )
       yield resp
 
+    case req @ POST -> Root / "create-invite" =>
+      for
+        in <- req.as[Model.CreateInviteForm]
+        resp <- in.toModel.fold(
+          errs =>
+            BadRequest(
+              View.createInvite(ctx.settings, Model.CreateInvitePage(in, errs.some, None))
+            ),
+          secret =>
+            signup.createInviteKey(secret).flatMap {
+              case None =>
+                val errs = ValidationErrors
+                    .one(Key.ServerSecret, "Invitation keys cannot be generated")
+
+                UnprocessableEntity(
+                  View.createInvite(
+                    ctx.settings,
+                    Model.CreateInvitePage(in, errs.some, None)
+                  )
+                )
+              case key =>
+                Ok(
+                  View.createInvite(ctx.settings, Model.CreateInvitePage(in, None, key))
+                )
+            }
+        )
+      yield resp
   }

@@ -25,31 +25,30 @@
           jq
           scala-cli
         ]);
-    in {
-      formatter = pkgs.alejandra;
 
-      devShells = {
-        default = pkgs.mkShellNoCC {
-          buildInputs = (builtins.attrValues devshell-tools.legacyPackages.${system}.cnt-scripts) ++ devshellPkgs;
-
-          DEV_CONTAINER = "wasdev";
+      devEnvVars = {
           SBT_OPTS = "-Xmx2G -Xss4m";
           PGPASSWORD = "dev";
           WEBAPPSTUB_POSTGRES_USER = "dev";
           WEBAPPSTUB_POSTGRES_PASSWORD = "dev";
           WEBAPPSTUB_POSTGRES_HOST = "wasdev";
-        };
-        vm = pkgs.mkShellNoCC {
-          buildInputs = (builtins.attrValues devshell-tools.legacyPackages.${system}.vm-scripts) ++ devshellPkgs;
+          # open for everyone can signup, closed for no one and
+          # invite:key to generate invite keys
+          WEBAPPSTUB_SIGNUP_MODE = "invite:secret42";
+          WEBAPPSTUB_AUTH_FIXED = "false"; # use true to remove login
+      };
+    in {
+      formatter = pkgs.alejandra;
 
+      devShells = {
+        default = pkgs.mkShellNoCC (devEnvVars // {
+          buildInputs = (builtins.attrValues devshell-tools.legacyPackages.${system}.cnt-scripts) ++ devshellPkgs;
+          DEV_CONTAINER = "wasdev";
+        });
+        vm = pkgs.mkShellNoCC (devEnvVars // {
+          buildInputs = (builtins.attrValues devshell-tools.legacyPackages.${system}.vm-scripts) ++ devshellPkgs;
           DEV_VM = "wasvm";
-          SBT_OPTS = "-Xmx2G -Xss4m";
-          PGPASSWORD = "dev";
-          WEBAPPSTUB_POSTGRES_USER = "dev";
-          WEBAPPSTUB_POSTGRES_PASSWORD = "dev";
-          WEBAPPSTUB_POSTGRES_HOST = "localhost";
-          WEBAPPSTUB_POSTGRES_PORT = "15432";
-        };
+        });
         ci = pkgs.mkShellNoCC {
           buildInputs = ciPkgs;
           SBT_OPTS = "-Xmx2G -Xss4m";
