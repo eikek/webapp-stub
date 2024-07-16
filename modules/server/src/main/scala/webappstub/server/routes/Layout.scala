@@ -31,7 +31,7 @@ object Layout:
             attr.content := "width=device-width, initial-scale=1, user-scalable=yes"
           ),
           script(attr.src := "/app/assets/htmx/htmx.min.js"),
-          script(attr.src := "/app/assets/htmx-ext-rt/response-targets.js"),
+          script(attr.src := "/app/assets/htmx/ext/response-targets.js"),
           link(attr.href := "/app/assets/fa/css/all.min.css", attr.rel := "stylesheet"),
           link(
             attr.href := "/app/assets/fi/css/flag-icons.min.css",

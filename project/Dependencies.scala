@@ -25,7 +25,6 @@ object Dependencies {
     val fontawesome = "6.5.2"
     val htmx4s = "0.1.0"
     val htmx = "2.0.1"
-    val htmxResponseTargets = "2.0.0"
     val http4sScalatags = "0.25.2"
     val flagIcons = "7.2.3"
   }
@@ -111,7 +110,7 @@ object Dependencies {
 
   val webjars = Seq(
     "org.webjars.npm" % "htmx.org" % V.htmx,
-    "org.webjars.npm" % "htmx-ext-response-targets" % V.htmxResponseTargets,
+//    "org.webjars.npm" % "htmx-ext-response-targets" % V.htmxResponseTargets,
     "org.webjars.npm" % "fortawesome__fontawesome-free" % V.fontawesome,
     "org.webjars.npm" % "flag-icons" % V.flagIcons
   ).map(

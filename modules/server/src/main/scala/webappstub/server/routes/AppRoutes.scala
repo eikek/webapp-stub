@@ -26,8 +26,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   private val webjars = Seq(
     // refers to our own js and css stuff, version is not needed
     Webjar("self")("webappstub-server", "", ""),
-    Webjar.htmx2,
-    makeWebjar("htmx-ext-rt", Webjars.htmxextresponsetargets),
+    makeWebjar("htmx", Webjars.htmxorg, "dist"),
     makeWebjar("fa", Webjars.fortawesome__fontawesomefree),
     makeWebjar("fi", Webjars.flagicons)
   )
