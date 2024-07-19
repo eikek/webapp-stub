@@ -28,16 +28,24 @@ trait PostgresTest {
         debug = cfg.debug
       )
 
-  private val initConfig =
-    PostgresConfig(
-      host"wasdev",
-      port"5432",
-      "webappstub",
-      "dev",
-      Password("dev"),
-      false,
-      6
-    )
+  private def fromEnv[A](key: String, f: String => Option[A] = _.some): Option[A] =
+    sys.env.get(key).flatMap(f)
+
+  private val initConfig = {
+    val pgHost = fromEnv("WEBAPPSTUB_POSTGRES_HOST", Host.fromString)
+      .getOrElse(host"localhost")
+
+    val pgPort = fromEnv("WEBAPPSTUB_POSTGRES_PORT", Port.fromString)
+      .getOrElse(port"5432")
+
+    val pgDb = fromEnv("WEBAPPSTUB_POSTGRES_DB").getOrElse("webappstub")
+    val pgUser = fromEnv("WEBAPPSTUB_POSTGRES_USER").getOrElse("dev")
+    val pgPass =
+      fromEnv("WEBAPPSTUB_POSTGRES_PASSWORD", s => Password(s).some)
+        .getOrElse(Password("dev"))
+
+    PostgresConfig(pgHost, pgPort, pgDb, pgUser, pgPass, false, 6)
+  }
 
   private val initSession: Resource[IO, Session[IO]] = makeSession(initConfig)
 
