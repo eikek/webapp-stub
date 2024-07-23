@@ -7,5 +7,7 @@ object RememberMeKey:
     if (s.isBlank()) Left(s"Invalid remember-me key: $s")
     else Right(s)
 
-  extension (self: RememberMeKey)
-    def value: String = self
+  def unsafeFromString(s: String): RememberMeKey =
+    fromString(s).fold(sys.error, identity)
+
+  extension (self: RememberMeKey) def value: String = self

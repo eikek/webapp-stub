@@ -36,6 +36,7 @@
           # 'invite:key' to generate invite keys
           WEBAPPSTUB_SIGNUP_MODE = "invite:secret42";
           WEBAPPSTUB_AUTH_FIXED = "false"; # use true to remove login
+          WEBAPPSTUB_REMEMBER_ME_VALID = "0s"; # use 0s to disable remember-me
       };
     in {
       formatter = pkgs.alejandra;

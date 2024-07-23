@@ -7,8 +7,10 @@ import scodec.bits.ByteVector
 case class AuthConfig(
     serverSecret: ByteVector,
     sessionValid: Duration,
-    authType: AuthConfig.AuthenticationType
-)
+    authType: AuthConfig.AuthenticationType,
+    rememberMeValid: Duration
+):
+  def rememberMeEnabled: Boolean = rememberMeValid > Duration.Zero
 
 object AuthConfig {
 

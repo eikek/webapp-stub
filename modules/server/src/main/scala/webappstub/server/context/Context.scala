@@ -1,6 +1,7 @@
 package webappstub.server.context
 
 import webappstub.backend.auth.AuthToken
+import webappstub.backend.auth.RememberMeToken
 import webappstub.common.model.AccountId
 
 trait Context:
@@ -10,7 +11,11 @@ trait Context:
 
 object Context:
 
-  final case class Authenticated(token: AuthToken, settings: Settings) extends Context:
+  final case class Authenticated(
+      token: AuthToken,
+      rememberMe: Option[RememberMeToken],
+      settings: Settings
+  ) extends Context:
     def toOptional: OptionalAuth = OptionalAuth(Some(token), settings)
     def account: AccountId = token.value
 

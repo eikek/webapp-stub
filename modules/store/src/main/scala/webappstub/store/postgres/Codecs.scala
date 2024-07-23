@@ -2,6 +2,8 @@ package webappstub.store.postgres
 
 import java.time.{Instant, ZoneOffset}
 
+import scala.concurrent.duration.Duration
+
 import cats.data.ValidatedNel
 import cats.syntax.all.*
 
@@ -13,6 +15,11 @@ import skunk.codec.all as c
 object Codecs:
   val instant: Codec[Instant] =
     c.timestamptz.imap(_.toInstant)(_.atOffset(ZoneOffset.UTC))
+
+  val duration: Codec[Duration] =
+    c.interval.imap(jd => Duration.fromNanos(jd.toNanos()))(sd =>
+      java.time.Duration.ofNanos(sd.toNanos)
+    )
 
   val contactId: Codec[ContactId] =
     c.int8.imap(ContactId(_))(_.value)
@@ -39,6 +46,9 @@ object Codecs:
 
   val accountState: Codec[AccountState] =
     c.varchar.eimap(AccountState.fromString)(_.name)
+
+  val rememberMeKey: Codec[RememberMeKey] =
+    c.varchar.eimap(RememberMeKey.fromString)(_.value)
 
   val contact: Codec[Contact] =
     (contactId *: accountId *: name *: email.opt *: phoneNumber.opt).to[Contact]

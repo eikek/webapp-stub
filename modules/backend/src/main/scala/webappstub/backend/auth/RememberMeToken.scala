@@ -1,9 +1,10 @@
 package webappstub.backend.auth
 
 import cats.effect.Sync
-import scodec.bits.ByteVector
-import scala.concurrent.duration.Duration
+
 import webappstub.common.model.RememberMeKey
+
+import scodec.bits.ByteVector
 
 opaque type RememberMeToken = TokenBase[RememberMeKey]
 
@@ -15,6 +16,6 @@ object RememberMeToken:
     TokenBase.fromString[RememberMeKey](s)
 
   extension (self: RememberMeToken)
+    def value: RememberMeKey = self.value
     def asString: String = self.asString
-    def validate[F[_]: Sync](key: ByteVector, validity: Duration): F[Boolean] =
-      self.validate(key, validity)
+    def validate(key: ByteVector): Boolean = self.sigValid(key)

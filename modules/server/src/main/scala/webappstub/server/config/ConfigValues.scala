@@ -71,7 +71,8 @@ object ConfigValues extends ConfigDecoders:
       case true  => AuthConfig.AuthenticationType.Fixed
       case false => AuthConfig.AuthenticationType.Internal
     }
-    (secret, valid, authType).mapN(AuthConfig.apply)
+    val rememberValid = config("REMEMBER_ME_VALID", "30 days").as[Duration]
+    (secret, valid, authType, rememberValid).mapN(AuthConfig.apply)
   }
 
   val signup = {

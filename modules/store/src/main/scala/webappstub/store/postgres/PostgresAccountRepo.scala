@@ -2,6 +2,8 @@ package webappstub.store.postgres
 
 import java.time.Instant
 
+import scala.concurrent.duration.Duration
+
 import cats.effect.*
 import cats.effect.std.Random
 import cats.syntax.all.*
@@ -27,6 +29,9 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
   def findById(id: AccountId): F[Option[Account]] =
     session.use(_.option(AccountSql.findById)(id))
 
+  def findByRememberMe(key: RememberMeKey, valid: Duration): F[Option[Account]] =
+    session.use(_.option(AccountSql.findByRememberMe)((key, valid, AccountState.Active)))
+
   def insert(account: NewAccount): F[Option[Account]] =
     session.inTx(
       _.unique(AccountSql.insert)(account)
@@ -42,10 +47,19 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
     session.inTx(_.execute(AccountSql.update)(id -> account).void)
 
   def createInviteKey: F[InviteKey] =
-    Random.scalaUtilRandom[F].flatMap(_.nextBytes(32)).flatMap { bytes =>
-      val key = InviteKey.unsafeFromString(ByteVector.view(bytes).toBase58)
+    randomString.flatMap { str =>
+      val key = InviteKey.unsafeFromString(str)
       session.use(_.unique(AccountSql.insertNewInvitationKey)(key)).as(key)
     }
+
+  def createRememberMe(id: AccountId): F[RememberMeKey] =
+    randomString.flatMap { str =>
+      val key = RememberMeKey.unsafeFromString(str)
+      session.use(_.unique(AccountSql.insertNewRememberMeKey)(id -> key)).as(key)
+    }
+
+  def incrementRememberMeUse(key: RememberMeKey): F[Unit] =
+    session.inTx(_.execute(AccountSql.incrementRememberMeUse)(key)).void
 
   def deleteInviteKeys(fromBefore: Instant): F[Long] =
     session.inTx(_.execute(AccountSql.deleteInviteKeysBefore)(fromBefore)).map {
@@ -55,6 +69,12 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
 
   def deleteInviteKey(key: InviteKey): F[Boolean] =
     session.inTx(_.execute(AccountSql.deleteInviteKey)(key)).map {
+      case Completion.Delete(n) => n == 1
+      case _                    => false
+    }
+
+  def deleteRememberMe(key: RememberMeKey): F[Boolean] =
+    session.inTx(_.execute(AccountSql.deleteRememberMe)(key)).map {
       case Completion.Delete(n) => n == 1
       case _                    => false
     }
@@ -71,3 +91,9 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
             session.use(_.execute(AccountSql.insertInvitation)(r)).as(a)
         }
     }
+
+  private def randomBytes =
+    Random.scalaUtilRandom[F].flatMap(_.nextBytes(32)).map(ByteVector.view(_))
+
+  private def randomString =
+    randomBytes.map(_.toBase58)

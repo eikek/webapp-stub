@@ -1,9 +1,11 @@
 package webappstub.backend.auth
 
-import cats.syntax.all.*
-import scodec.bits.ByteVector
 import cats.Invariant
+import cats.syntax.all.*
+
 import webappstub.common.model.*
+
+import scodec.bits.ByteVector
 
 trait SignedData[A]:
   def encode(value: A): ByteVector

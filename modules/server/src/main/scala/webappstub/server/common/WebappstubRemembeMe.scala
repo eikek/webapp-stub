@@ -1,8 +1,9 @@
 package webappstub.server.common
 
+import webappstub.backend.auth.RememberMeToken
+
 import org.http4s.*
 import org.typelevel.ci.CIString
-import webappstub.backend.auth.RememberMeToken
 
 final case class WebappstubRememberMe(token: String):
   def asCookie(baseUrl: Uri): ResponseCookie =
@@ -13,8 +14,10 @@ object WebappstubRememberMe:
   val cookieName = "webappstub_rememberMe"
 
   def parse(value: String): ParseResult[WebappstubRememberMe] =
-    if (value.isEmpty) ParseResult.fail("Empty rememberMe token", "Empty rememberMe token")
-    else Right(WebappstubRememberMe(value))
+    Option(value)
+      .filter(_.nonEmpty)
+      .toRight(ParseFailure("Invalid remember-me cookie", ""))
+      .map(WebappstubRememberMe.apply)
 
   given Header[WebappstubRememberMe, Header.Single] =
     Header.create(name, _.token, parse)

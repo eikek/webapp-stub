@@ -1,12 +1,16 @@
 package webappstub.backend.auth
 
-import cats.syntax.all.*
 import java.time.Instant
-import scodec.bits.ByteVector
+
 import scala.concurrent.duration.*
+
 import cats.effect.Sync
 import cats.effect.std.Random
+import cats.syntax.all.*
+
 import webappstub.common.SignUtil
+
+import scodec.bits.ByteVector
 
 final private[auth] case class TokenBase[A](
     v: A,

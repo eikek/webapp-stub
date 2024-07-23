@@ -1,11 +1,10 @@
 package webappstub.backend.auth
 
 enum LoginResult:
-  case Success(token: AuthToken)
+  case Success(token: AuthToken, rememberMe: Option[RememberMeToken])
   case InvalidAuth
-  case InvalidTime
 
-  def fold[A](whenFail: => A, whenSuccess: AuthToken => A): A =
+  def fold[A](whenFail: => A, whenSuccess: (AuthToken, Option[RememberMeToken]) => A): A =
     this match
-      case Success(token) => whenSuccess(token)
-      case _              => whenFail
+      case Success(token, rm) => whenSuccess(token, rm)
+      case _                  => whenFail

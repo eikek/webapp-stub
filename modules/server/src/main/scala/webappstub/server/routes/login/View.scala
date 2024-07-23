@@ -53,12 +53,23 @@ object View extends Components:
               input(
                 attr.`type` := "password",
                 attr.name := "password",
-                attr.autocomplete := true,
+                attr.autocomplete := false,
                 cls := s"pl-10 pr-4 py-2 rounded-lg ${Styles.textInput}",
                 attr.placeholder := texts.passwordPlaceholder
               )
             )
           ),
+          Option.when(cfg.rememberMeEnabled) {
+            div(
+              cls := "mx-2 flex",
+              input(
+                cls := "mr-2",
+                attr.`type` := "checkbox",
+                attr.name := "rememberMe",
+                "Remember me"
+              )
+            )
+          },
           div(
             cls := "flex flex-col my-3",
             button(

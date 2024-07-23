@@ -2,6 +2,8 @@ package webappstub.store.postgres
 
 import java.time.Instant
 
+import scala.concurrent.duration.Duration
+
 import webappstub.common.model.*
 import webappstub.store.postgres.Codecs as c
 
@@ -60,6 +62,20 @@ private object AccountSql:
     where login_name = ${c.loginName} and s.name = ${c.accountState}
     """.query(c.account)
 
+  val findByRememberMe: Query[(RememberMeKey, Duration, AccountState), Account] =
+    sql"""
+    select $cols
+    from "account" a
+    inner join "account_state" s on a.state_id = s.id
+    inner join "remember_me" r on r.account_id = a.id
+    where r.ident = ${c.rememberMeKey}
+      AND (r.created_at + ${c.duration}) > now()
+      AND s.name = ${c.accountState}
+    """.query(c.account)
+
+  val deleteRememberMe: Command[RememberMeKey] =
+    sql"""delete from "remember_me" where ident = ${c.rememberMeKey}""".command
+
   val deleteInviteKey: Command[InviteKey] =
     sql"""delete from "invitation" where "key" = ${c.inviteKey}""".command
 
@@ -73,6 +89,13 @@ private object AccountSql:
   val insertNewInvitationKey: Query[InviteKey, Long] =
     sql"""insert into "invitation" ("key") values (${c.inviteKey})
           returning id""".query(int8)
+
+  val insertNewRememberMeKey: Query[(AccountId, RememberMeKey), Long] =
+    sql"""insert into "remember_me" ("account_id", "ident") values (${c.accountId}, ${c.rememberMeKey}) returning id"""
+      .query(int8)
+
+  val incrementRememberMeUse: Command[RememberMeKey] =
+    sql"""update "remember_me" set uses = uses + 1 where ident = ${c.rememberMeKey}""".command
 
   val insertInvitation: Command[InviteRecord] =
     sql"""insert into "invitation" ("id", "key", "created_at") values ($int8, ${c.inviteKey}, ${c.instant})""".command

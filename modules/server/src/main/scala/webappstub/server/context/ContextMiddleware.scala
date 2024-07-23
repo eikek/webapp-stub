@@ -6,12 +6,13 @@ import cats.data.OptionT
 import cats.syntax.all.*
 
 import webappstub.backend.Backend
-import webappstub.backend.auth.AuthConfig
 import webappstub.backend.auth.AuthConfig.AuthenticationType
 import webappstub.backend.auth.LoginResult
+import webappstub.backend.auth.{AuthConfig, SessionInfo}
 import webappstub.server.Config
 import webappstub.server.common.ClientRequestInfo
 import webappstub.server.common.WebappstubAuth
+import webappstub.server.common.WebappstubRememberMe
 
 import org.http4s.*
 import org.http4s.Request
@@ -41,14 +42,25 @@ trait ContextMiddleware[F[_]]:
 object ContextMiddleware:
   type GetContext[F[_], A] = Kleisli[[X] =>> OptionT[F, X], Request[F], A]
 
+  def getSessionInfo[F[_]](req: Request[F]): Option[SessionInfo] = {
+    val at = WebappstubAuth.fromRequest(req).map(_.token)
+    val rt = WebappstubRememberMe.fromRequest(req).map(_.token)
+    (at, rt) match
+      case (Some(astr), Some(rstr)) => SessionInfo.Session(astr, rstr).some
+      case (Some(astr), None)       => SessionInfo.SessionOnly(astr).some
+      case (None, Some(rstr))       => SessionInfo.RememberMe(rstr).some
+      case (None, None)             => None
+
+  }
+
   private def getContext[F[_]: Monad](
-      login: Option[String] => F[LoginResult]
+      login: Option[SessionInfo] => F[LoginResult]
   ): GetContext[F, Context.Authenticated] =
     Kleisli { (req: Request[F]) =>
       OptionT(
-        login(WebappstubAuth.fromRequest(req).map(_.token)).map {
-          case LoginResult.Success(token) =>
-            Some(Context.Authenticated(token, Settings.fromRequest(req)))
+        login(getSessionInfo(req)).map {
+          case LoginResult.Success(token, rme) =>
+            Some(Context.Authenticated(token, rme, Settings.fromRequest(req)))
 
           case _ =>
             None
@@ -60,8 +72,8 @@ object ContextMiddleware:
     backend.config.auth.authType match
       case AuthenticationType.Fixed =>
         apply(cfg) {
-          case Some(token) =>
-            backend.login.loginSession(token).flatMap {
+          case Some(session) =>
+            backend.login.loginSession(session).flatMap {
               case r: LoginResult.Success => r.pure[F]
               case _                      => backend.login.autoLogin
             }
@@ -75,7 +87,7 @@ object ContextMiddleware:
 
   def apply[F[_]: Monad](
       cfg: Config
-  )(login: Option[String] => F[LoginResult]): ContextMiddleware[F] =
+  )(login: Option[SessionInfo] => F[LoginResult]): ContextMiddleware[F] =
     new ContextMiddleware[F] {
       def secured(
           inner: Context.Authenticated => HttpRoutes[F],
@@ -113,7 +125,7 @@ object ContextMiddleware:
 
       // routes may override the auth cookie, only add if not already present
       private def addAuthCookie(cookie: ResponseCookie, resp: Response[F]) =
-        if (resp.cookies.exists(_.name == WebappstubAuth.cookieName)) resp
+        if (resp.cookies.exists(_.name == cookie.name)) resp
         else resp.addCookie(cookie)
 
       extension (self: OptionT[F, Response[F]])
