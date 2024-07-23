@@ -18,6 +18,7 @@ import ciris.*
 import com.comcast.ip4s.{Host, Port}
 import org.http4s.Uri
 import scodec.bits.ByteVector
+import scribe.Level
 
 object ConfigValues extends ConfigDecoders:
   private val envPrefix = "WEBAPPSTUB"
@@ -40,6 +41,22 @@ object ConfigValues extends ConfigDecoders:
 
   private def config(name: String, defval: String): ConfigValue[Effect, String] =
     config(name, Some(defval))
+
+  def envMap[A, B](
+      envName: String
+  )(using ConfigDecoder[String, A], ConfigDecoder[String, B]) =
+    config(s"${envName}_NAMES")
+      .as[List[String]]
+      .listflatMap { k =>
+        val value = config(s"${envName}_$k").as[B]
+        val ckey = ConfigKey(s"${envName} key: $k")
+        val kk = ConfigDecoder[String, A]
+          .decode(Some(ckey), k)
+          .fold(ConfigValue.failed, ConfigValue.loaded(ckey, _))
+
+        value.flatMap(v => kk.map(_ -> v))
+      }
+      .map(_.toMap)
 
   def getAll: Map[String, Option[String]] = values.get()
 
@@ -86,6 +103,13 @@ object ConfigValues extends ConfigDecoders:
   val webConfig = {
     val name = config("WEB_APP_NAME", "Webappstub")
     name.map(WebConfig.apply)
+  }
+
+  val logConfig = {
+    val minLevel = config("LOGGING_MIN_LEVEL", "ERROR").as[Level]
+    val fmt = config("LOGGING_FORMAT", "plain").as[LogConfig.Format]
+    val extraLevel = envMap[String, Level]("LOGGING_LEVELS").default(Map.empty)
+    (minLevel, fmt, extraLevel).mapN(LogConfig.apply)
   }
 
   val timeZone =

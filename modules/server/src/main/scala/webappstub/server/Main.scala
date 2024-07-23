@@ -6,6 +6,7 @@ import cats.effect.*
 
 import webappstub.backend.Backend
 import webappstub.server.common.Responses
+import webappstub.server.config.ScribeConfigure
 import webappstub.server.routes.AppRoutes
 
 import org.http4s.ember.server.EmberServerBuilder
@@ -27,7 +28,8 @@ object Main extends IOApp:
 
   def run(args: List[String]): IO[ExitCode] =
     Config.load[IO].flatMap { cfg =>
-      logger.info(s"Config: $cfg") >>
+      ScribeConfigure.configure[IO](cfg.logConfig) >>
+        logger.info(s"Config: $cfg") >>
         Backend[IO](cfg.backend).use { backend =>
           val routes = createRoutes(backend, cfg)
           EmberServerBuilder

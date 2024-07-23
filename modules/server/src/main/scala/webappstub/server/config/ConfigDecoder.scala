@@ -15,12 +15,21 @@ import ciris.*
 import com.comcast.ip4s.*
 import org.http4s.Uri
 import scodec.bits.ByteVector
+import scribe.Level
 
 private trait ConfigDecoders:
   extension [A, B](self: ConfigDecoder[A, B])
     def emap[C](typeName: String)(f: B => Either[String, C])(using Show[B]) =
       self.mapEither((key, b) =>
         f(b).left.map(err => ConfigError.decode(typeName, key, b))
+      )
+
+  extension [A](self: ConfigValue[Effect, List[A]])
+    def listflatMap[B](f: A => ConfigValue[Effect, B]): ConfigValue[Effect, List[B]] =
+      self.flatMap(ids =>
+        ids.foldLeft(ConfigValue.loaded(ConfigKey(""), List.empty[B])) { (cv, id) =>
+          cv.flatMap(l => f(id).map(_ :: l))
+        }
       )
 
   given ConfigDecoder[String, Password] =
@@ -60,3 +69,21 @@ private trait ConfigDecoders:
 
   given ConfigDecoder[String, SignupMode] =
     ConfigDecoder[String].emap("SignupMode")(SignupMode.fromString)
+
+  given ConfigDecoder[String, Level] =
+    ConfigDecoder[String].mapOption("Level")(Level.get)
+
+  given ConfigDecoder[String, LogConfig.Format] =
+    ConfigDecoder[String].emap("LogFormat")(LogConfig.Format.fromString)
+
+  given [A](using ConfigDecoder[String, A]): ConfigDecoder[String, List[A]] =
+    ConfigDecoder[String].mapEither { (ckey, str) =>
+      str
+        .split(',')
+        .toList
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .traverse(
+          ConfigDecoder[String, A].decode(ckey, _)
+        )
+    }

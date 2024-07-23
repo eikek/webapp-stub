@@ -14,7 +14,8 @@ final case class Config(
     bindHost: Host,
     bindPort: Port,
     baseUrl: Uri,
-    webapp: WebConfig
+    webapp: WebConfig,
+    logConfig: LogConfig
 )
 
 object Config:
@@ -25,5 +26,6 @@ object Config:
       ConfigValues.bindHost,
       ConfigValues.bindPort,
       ConfigValues.baseUri,
-      ConfigValues.webConfig
+      ConfigValues.webConfig,
+      ConfigValues.logConfig
     ).mapN(Config.apply).load[F]
