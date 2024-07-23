@@ -12,7 +12,7 @@ object Context:
 
   final case class Authenticated(token: AuthToken, settings: Settings) extends Context:
     def toOptional: OptionalAuth = OptionalAuth(Some(token), settings)
-    def account: AccountId = token.account
+    def account: AccountId = token.value
 
   final case class OptionalAuth(token: Option[AuthToken], settings: Settings)
       extends Context:

@@ -32,8 +32,8 @@
           WEBAPPSTUB_POSTGRES_USER = "dev";
           WEBAPPSTUB_POSTGRES_PASSWORD = "dev";
           WEBAPPSTUB_POSTGRES_HOST = "wasdev";
-          # open for everyone can signup, closed for no one and
-          # invite:key to generate invite keys
+          # 'open' for everyone can signup, 'closed' for no one and
+          # 'invite:key' to generate invite keys
           WEBAPPSTUB_SIGNUP_MODE = "invite:secret42";
           WEBAPPSTUB_AUTH_FIXED = "false"; # use true to remove login
       };

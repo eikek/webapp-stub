@@ -21,9 +21,11 @@ object LoginService:
       def loginSession(token: String): F[LoginResult] =
         AuthToken.fromString(token) match {
           case Right(at) =>
-            if (at.sigInvalid(cfg.serverSecret)) LoginResult.InvalidAuth.pure[F]
-            else if (at.isExpired(cfg.sessionValid)) LoginResult.InvalidTime.pure[F]
-            else AuthToken.refresh(at, cfg.serverSecret).map(LoginResult.Success(_))
+            at.validate(cfg.serverSecret, cfg.sessionValid).flatMap {
+              case true =>
+                AuthToken.refresh(at, cfg.serverSecret).map(LoginResult.Success(_))
+              case false => LoginResult.InvalidAuth.pure[F]
+            }
           case Left(_) =>
             LoginResult.InvalidAuth.pure[F]
         }
@@ -47,7 +49,7 @@ object LoginService:
               LoginResult.InvalidAuth.pure[F]
             case Some(a) =>
               AuthToken
-                .user(a.id, cfg.serverSecret)
+                .of(a.id, cfg.serverSecret)
                 .map(LoginResult.Success(_))
         yield result
 
@@ -59,7 +61,7 @@ object LoginService:
             case None => LoginResult.InvalidAuth.pure[F]
             case Some(a) =>
               AuthToken
-                .user(a.id, cfg.serverSecret)
+                .of(a.id, cfg.serverSecret)
                 .map(LoginResult.Success(_))
         yield result
     }
