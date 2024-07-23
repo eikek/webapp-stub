@@ -6,7 +6,7 @@ set -euo pipefail
 new_name="${NEW_NAME:-}"
 user_name="${USER_NAME:-}"
 user_email="${USER_EMAIL:-}"
-dry_run=${DRY_RUN:-1}
+dry_run=${DRY_RUN:-0}
 
 if [ -z "$new_name" ]; then
     read -p "What is the new name: " new_name
