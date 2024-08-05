@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 #
-# requires bash 4+ (sorry apple user)
 set -euo pipefail
 
 new_name="${NEW_NAME:-}"
@@ -56,10 +55,6 @@ if [ $dry_run -eq 0 ]; then
     sed -i -e "s/wasdev/$cnt_name/g" flake.nix
     sed -i -e "s/wasvm/$vm_name/g" flake.nix
     sed -i -e "s/webappstub/$new_name/g" flake.nix
-else
-    sed -e "s/wasdev/$cnt_name/g" flake.nix
-    sed -e "s/wasvm/$vm_name/g" flake.nix
-    sed -e "s/webappstub/$new_name/g" flake.nix
 fi
 
 read -p "Re-initialize git? (y/n) " reinit_git

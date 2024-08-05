@@ -67,6 +67,10 @@
                 enable = true;
                 databases = ["webappstub"];
               };
+              services.dev-keycloak = {
+                enable = true;
+              };
+              networking.hostName = "wasdev";
             }
           ];
         };
@@ -77,6 +81,9 @@
               services.dev-postgres = {
                 enable = true;
                 databases = ["webappstub"];
+              };
+              services.dev-keycloak = {
+                enable = true;
               };
             }
           ];
