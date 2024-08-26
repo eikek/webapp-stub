@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1722583959,
-        "narHash": "sha256-kVUt/343GJK4eJdi0WDCe0JR+B1uRxJQgU9eAFv5wuE=",
+        "lastModified": 1724320658,
+        "narHash": "sha256-YTgT2yHf936sxRHZiggOf5g+wcfxnlz9fAbRSKh5ukI=",
         "owner": "eikek",
         "repo": "devshell-tools",
-        "rev": "8781d93bbc9d912410d3e184c99dea3f12974ff0",
+        "rev": "8f2b96bb183d647ca84a8538305f2b0529527b18",
         "type": "github"
       },
       "original": {

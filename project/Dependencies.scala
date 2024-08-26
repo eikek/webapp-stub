@@ -7,12 +7,14 @@ object Dependencies {
     val scala3 = "3.4.2"
 
     val borer = "1.14.1"
+    val borerCompats = "0.1.0-SNAPSHOT"
     val bcrypt = "0.4"
     val catsEffect = "3.5.4"
     val catsParse = "1.0.0"
     val ciris = "3.6.0"
     val decline = "2.4.1"
     val http4s = "0.23.27"
+    val jwtScala = "10.0.1"
     val monocle = "3.2.0"
     val munit = "1.0.0"
     val munitCatsEffect = "2.0.0"
@@ -29,6 +31,10 @@ object Dependencies {
     val http4sScalatags = "0.25.2"
     val flagIcons = "7.2.3"
   }
+
+  val jwtScala = Seq(
+    "com.github.jwt-scala" %% "jwt-core" % V.jwtScala
+  )
 
   val bcrypt = Seq(
     "org.mindrot" % "jbcrypt" % V.bcrypt
@@ -87,8 +93,15 @@ object Dependencies {
   val borer = Seq(
     "io.bullet" %% "borer-core" % V.borer,
     "io.bullet" %% "borer-derivation" % V.borer,
-    "io.bullet" %% "borer-compat-cats" % V.borer,
+    "io.bullet" %% "borer-compat-cats" % V.borer
+  )
+
+  val borerScodec = Seq(
     "io.bullet" %% "borer-compat-scodec" % V.borer
+  )
+
+  val borerCompatsHttp4s = Seq(
+    "com.github.eikek" %% "borer-compats-http4s" % V.borerCompats
   )
 
   val catsCore = Seq("org.typelevel" %% "cats-core" % V.catsCore)
