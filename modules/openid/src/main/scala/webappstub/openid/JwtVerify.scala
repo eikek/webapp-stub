@@ -17,7 +17,7 @@ object JwtVerify:
     new JwtVerify[F] {
       def verify(token: String): F[Either[JwtError, WebappJwtToken]] =
         Applicative[F].pure(result match
-          case a: JwtError   => Left(a)
+          case a: JwtError       => Left(a)
           case b: WebappJwtToken => Right(b)
         )
     }
