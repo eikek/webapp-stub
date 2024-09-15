@@ -21,7 +21,7 @@ object Dependencies {
     val munitScalaCheck = "1.0.0"
     val scodec2 = "2.2.2"
     val catsCore = "2.9.0"
-    val fs2 = "3.10.2"
+    val fs2 = "3.11.0"
     val scalaCheck = "1.17.0"
     val scribe = "3.15.0"
     val skunk = "1.1.0-M3"
