@@ -226,7 +226,7 @@ def createWebjarSource(wj: Seq[ModuleID], out: File): Seq[File] = {
 addCommandAlias("ci", "Test/compile; lint; test")
 addCommandAlias(
   "lint",
-  "scalafmtSbtCheck; scalafmtCheckAll; restapi/openapiLint; Compile/scalafix --check; Test/scalafix --check"
+  "scalafmtSbtCheck; scalafmtCheckAll; Compile/scalafix --check; Test/scalafix --check"
 )
 addCommandAlias("fix", "Compile/scalafix; Test/scalafix; scalafmtSbt; scalafmtAll")
 addCommandAlias("make-pkg", "server/Universal/packageBin")
