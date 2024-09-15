@@ -16,8 +16,9 @@ object Dependencies {
     val http4s = "0.23.27"
     val jwtScala = "10.0.1"
     val monocle = "3.2.0"
-    val munit = "1.0.0"
+    val munit = "1.0.2"
     val munitCatsEffect = "2.0.0"
+    val munitScalaCheck = "1.0.0"
     val scodec2 = "2.2.2"
     val catsCore = "2.9.0"
     val fs2 = "3.10.2"
@@ -118,7 +119,7 @@ object Dependencies {
 
   val munit = Seq(
     "org.scalameta" %% "munit" % V.munit,
-    "org.scalameta" %% "munit-scalacheck" % V.munit,
+    "org.scalameta" %% "munit-scalacheck" % V.munitScalaCheck,
     "org.typelevel" %% "munit-cats-effect" % V.munitCatsEffect
   )
 
