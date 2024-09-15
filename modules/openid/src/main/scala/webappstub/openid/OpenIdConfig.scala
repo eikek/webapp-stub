@@ -1,10 +1,10 @@
 package webappstub.openid
 
+import com.github.eikek.borer.compats.http4s.Http4sCodec.given
 import io.bullet.borer.Decoder
 import io.bullet.borer.Encoder
 import io.bullet.borer.derivation.MapBasedCodecs
 import io.bullet.borer.derivation.key
-import com.github.eikek.borer.compats.http4s.Http4sCodec.given
 import org.http4s.Uri
 
 final case class OpenIdConfig(

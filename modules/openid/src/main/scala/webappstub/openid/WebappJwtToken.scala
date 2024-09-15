@@ -2,11 +2,12 @@ package webappstub.openid
 
 import java.time.Instant
 
+import webappstub.openid.WebappJwtToken.{Access, AccountRoles}
+
 import io.bullet.borer.NullOptions.given
 import io.bullet.borer.derivation.MapBasedCodecs
 import io.bullet.borer.derivation.key
 import io.bullet.borer.{Decoder, Encoder}
-import webappstub.openid.WebappJwtToken.{Access, AccountRoles}
 
 final case class WebappJwtToken(
     @key("exp") expirationTime: Option[Instant] = None,

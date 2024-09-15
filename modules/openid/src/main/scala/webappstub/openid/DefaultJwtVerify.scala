@@ -8,6 +8,7 @@ import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.openid.DefaultJwtVerify.State
+
 import com.github.eikek.borer.compats.http4s.BorerEntityJsonCodec
 import org.http4s.Method.GET
 import org.http4s.Uri
