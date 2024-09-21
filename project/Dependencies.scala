@@ -4,7 +4,7 @@ import sbt.Keys.scalaVersion
 object Dependencies {
 
   object V {
-    val scala3 = "3.5.0"
+    val scala3 = "3.5.1"
 
     val borer = "1.14.1"
     val borerCompats = "0.1.0-SNAPSHOT"
