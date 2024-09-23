@@ -9,6 +9,7 @@ import webappstub.store.AccountRepo
 
 import soidc.borer.given
 import soidc.core.JwkGenerate
+import soidc.core.JwtValidator
 import soidc.core.LocalFlow
 import soidc.jwt.*
 
@@ -16,6 +17,7 @@ trait LoginService[F[_]]:
   def realm: WebappstubRealm[F]
   def loginUserPass(up: UserPass): F[LoginResult]
   def loginRememberMe(token: RememberMeToken): F[LoginResult]
+  def rememberMeValidator: JwtValidator[F, JoseHeader, SimpleClaims]
   def autoLogin: F[LoginResult]
 
 object LoginService:
@@ -82,6 +84,9 @@ object LoginService:
                 .makeToken(a.id)
                 .map(LoginResult.Success(_, None))
         yield result
+
+      def rememberMeValidator: JwtValidator[F, JoseHeader, SimpleClaims] =
+        rmeRealm.validator
 
       def loginRememberMe(token: RememberMeToken): F[LoginResult] =
         if (!cfg.rememberMeEnabled) LoginResult.InvalidAuth.pure[F]

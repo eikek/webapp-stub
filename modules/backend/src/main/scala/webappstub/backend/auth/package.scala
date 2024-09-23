@@ -1,11 +1,11 @@
 package webappstub.backend
 
 import webappstub.common.model.AccountId
+import webappstub.common.model.RememberMeKey
 
 import soidc.core.LocalFlow
 import soidc.core.Realm
 import soidc.jwt.*
-import webappstub.common.model.RememberMeKey
 
 package object auth {
 

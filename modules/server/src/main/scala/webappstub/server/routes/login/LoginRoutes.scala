@@ -4,6 +4,7 @@ import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.backend.LoginService
+import webappstub.backend.auth.LoginResult
 import webappstub.server.Config
 import webappstub.server.common.*
 import webappstub.server.context.*
@@ -26,16 +27,25 @@ final class LoginRoutes[F[_]: Async](
 
   private val api = LoginApi[F](login)
   private val cookieName = "webappstub_auth"
+  private val rememberMeCookie = api.rememberMeCookie
 
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
     case ContextRequest(ctx, req @ GET -> Root) =>
       val settings = Settings.fromRequest(req)
       if (ctx.token.isDefined) TemporaryRedirect(Location(uri"/app/contacts"))
-      // else if (config.backend.auth.rememberMeEnabled) {
-      //   import soidc.http4s.routes.*
-      //   GetToken.cookie("weappstub_remember_me").
-      // }
-      else Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
+      else
+        api.findRememberMe(req).flatMap {
+          case None => Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
+          case Some(rkey) =>
+            api.doRememberMeLogin(rkey).flatMap {
+              case LoginResult.Success(token, _) =>
+                val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
+                val cookie = JwtCookie.create(cookieName, token.jws, baseUrl)
+                TemporaryRedirect(Location(uri"/app/contacts")).map(_.addCookie(cookie))
+              case LoginResult.InvalidAuth =>
+                Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
+            }
+        }
 
     case ContextRequest(ctx, req @ POST -> Root) =>
       for
@@ -48,10 +58,13 @@ final class LoginRoutes[F[_]: Async](
             (token, rme) => {
               val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
               val cookie = JwtCookie.create(cookieName, token.jws, baseUrl)
+              val rmeCookie = rme
+                .map(t => JwtCookie.create(rememberMeCookie, t.jws, baseUrl))
+                .getOrElse(JwtCookie.remove(rememberMeCookie, baseUrl))
 
               val next = baseUrl / "app" / "contacts"
               NoContent()
-                .map(_.addCookie(cookie))
+                .map(_.addCookie(cookie).addCookie(rmeCookie))
                 .map(_.putHeaders(HxLocation(HxLocation.Value.Path(next))))
             }
           )
@@ -64,7 +77,10 @@ final class LoginRoutes[F[_]: Async](
           _.addCookie(
             JwtCookie.remove(cookieName, ClientRequestInfo.getBaseUrl(config, req))
           )
-            .removeCookie(WebappstubRememberMe.cookieName)
+            .addCookie(
+              JwtCookie
+                .remove(rememberMeCookie, ClientRequestInfo.getBaseUrl(config, req))
+            )
             .putHeaders(HxRedirect(uri"/app/login"))
         )
   }
