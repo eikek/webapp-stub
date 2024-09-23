@@ -32,7 +32,7 @@ final class LoginRoutes[F[_]: Async](
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
     case ContextRequest(ctx, req @ GET -> Root) =>
       val settings = Settings.fromRequest(req)
-      if (ctx.token.isDefined) TemporaryRedirect(Location(uri"/app/contacts"))
+      if (ctx.isAuthenticated) TemporaryRedirect(Location(uri"/app/contacts"))
       else
         api.findRememberMe(req).flatMap {
           case None => Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
@@ -40,7 +40,9 @@ final class LoginRoutes[F[_]: Async](
             api.doRememberMeLogin(rkey).flatMap {
               case LoginResult.Success(token, _) =>
                 val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
-                val cookie = JwtCookie.create(cookieName, token.jws, baseUrl)
+                val cookie = JwtCookie
+                  .create(cookieName, token.jws, baseUrl)
+                  .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
                 TemporaryRedirect(Location(uri"/app/contacts")).map(_.addCookie(cookie))
               case LoginResult.InvalidAuth =>
                 Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
@@ -57,9 +59,15 @@ final class LoginRoutes[F[_]: Async](
             Forbidden(View.loginFailed("Authentication failed")),
             (token, rme) => {
               val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
-              val cookie = JwtCookie.create(cookieName, token.jws, baseUrl)
+              val cookie = JwtCookie
+                .create(cookieName, token.jws, baseUrl)
+                .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
               val rmeCookie = rme
-                .map(t => JwtCookie.create(rememberMeCookie, t.jws, baseUrl))
+                .map(t =>
+                  JwtCookie
+                    .create(rememberMeCookie, t.jws, baseUrl)
+                    .copy(maxAge = t.claims.expirationTime.map(_.toSeconds))
+                )
                 .getOrElse(JwtCookie.remove(rememberMeCookie, baseUrl))
 
               val next = baseUrl / "app" / "contacts"
