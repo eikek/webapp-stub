@@ -14,7 +14,6 @@ object Dependencies {
     val ciris = "3.6.0"
     val decline = "2.4.1"
     val http4s = "0.23.28"
-    val jwtScala = "10.0.1"
     val monocle = "3.2.0"
     val munit = "1.0.2"
     val munitCatsEffect = "2.0.0"
@@ -45,10 +44,6 @@ object Dependencies {
 
   val soidcHttp4sRoutes = Seq(
     "com.github.eikek" %% "soidc-http4s-routes" % V.soidc
-  )
-
-  val jwtScala = Seq(
-    "com.github.jwt-scala" %% "jwt-core" % V.jwtScala
   )
 
   val bcrypt = Seq(

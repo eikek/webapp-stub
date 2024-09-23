@@ -87,22 +87,6 @@ val backend = project
   )
   .dependsOn(common, store % "compile->compile;test->test")
 
-val openid = project
-  .in(file("modules/openid"))
-  .disablePlugins(RevolverPlugin)
-  .settings(sharedSettings)
-  .settings(testSettingsMUnit)
-  .settings(
-    name := "webappstub-openid",
-    libraryDependencies ++= Dependencies.scribe ++
-      Dependencies.http4sCore ++
-      Dependencies.http4sClient ++
-      Dependencies.http4sServer ++
-      Dependencies.jwtScala ++
-      Dependencies.borer ++
-      Dependencies.borerCompatsHttp4s
-  )
-
 val server = project
   .in(file("modules/server"))
   .enablePlugins(
@@ -173,7 +157,6 @@ val root = project
   .aggregate(
     common,
     store,
-    openid,
     backend,
     server
   )
