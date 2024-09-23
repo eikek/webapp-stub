@@ -5,25 +5,26 @@ import cats.syntax.all.*
 
 import webappstub.server.Config
 import webappstub.server.common.*
-import webappstub.server.context.Context
+import webappstub.server.context.*
 import webappstub.server.data.UiTheme
 
 import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.headers.HxRefresh
-import org.http4s.HttpRoutes
+import org.http4s.*
 import org.http4s.scalatags.*
 
 final class SettingRoutes[F[_]: Async](config: Config) extends Htmx4sDsl[F]:
 
-  def routes(ctx: Context.OptionalAuth) = HttpRoutes.of[F] {
-    case req @ POST -> Root / "cycle-theme" =>
+  def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
+    case ContextRequest(ctx, req @ POST -> Root / "cycle-theme") =>
+      val settings = Settings.fromRequest(req)
       val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
-      val next = UiTheme.cycle(ctx.settings.theme)
+      val next = UiTheme.cycle(settings.theme)
       NoContent().map(
         _.addCookie(WebappstubTheme(next).asCookie(baseUrl)).putHeaders(HxRefresh(true))
       )
 
-    case req @ POST -> Root / "language" =>
+    case ContextRequest(ctx, req @ POST -> Root / "language") =>
       for
         in <- req.as[Model.SettingsForm]
         baseUrl = ClientRequestInfo.getBaseUrl(config, req)
@@ -38,16 +39,18 @@ final class SettingRoutes[F[_]: Async](config: Config) extends Htmx4sDsl[F]:
           }
       yield resp
 
-    case GET -> Root / "language" :? Params.MenuOpen(flag) =>
-      Ok(Views.languageDropdown(ctx.settings.language, flag))
+    case ContextRequest(ctx, req @ GET -> Root / "language" :? Params.MenuOpen(flag)) =>
+      val settings = Settings.fromRequest(req)
+      Ok(Views.languageDropdown(settings.language, flag))
 
-    case req @ POST -> Root =>
+    case ContextRequest(ctx, req @ POST -> Root) =>
+      val settings = Settings.fromRequest(req)
       for
         in <- req.as[Model.SettingsForm]
 
         baseUrl = ClientRequestInfo.getBaseUrl(config, req)
-        theme = in.theme.getOrElse(WebappstubTheme(ctx.settings.theme))
-        lang = in.language.getOrElse(WebappstubLang(ctx.settings.language))
+        theme = in.theme.getOrElse(WebappstubTheme(settings.theme))
+        lang = in.language.getOrElse(WebappstubLang(settings.language))
 
         resp <- NoContent().map(
           _.addCookie(theme.asCookie(baseUrl))

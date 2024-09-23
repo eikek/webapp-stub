@@ -22,6 +22,7 @@ object Dependencies {
     val scodec2 = "2.2.2"
     val catsCore = "2.9.0"
     val fs2 = "3.11.0"
+    val soidc = "0.1.0-SNAPSHOT"
     val scalaCheck = "1.17.0"
     val scribe = "3.15.0"
     val skunk = "1.1.0-M3"
@@ -32,6 +33,19 @@ object Dependencies {
     val http4sScalatags = "0.25.2"
     val flagIcons = "7.2.3"
   }
+
+  val soidcJwt = Seq(
+    "com.github.eikek" %% "soidc-jwt" % V.soidc,
+    "com.github.eikek" %% "soidc-borer" % V.soidc
+  )
+
+  val soidcCore = Seq(
+    "com.github.eikek" %% "soidc-core" % V.soidc
+  )
+
+  val soidcHttp4sRoutes = Seq(
+    "com.github.eikek" %% "soidc-http4s-routes" % V.soidc
+  )
 
   val jwtScala = Seq(
     "com.github.jwt-scala" %% "jwt-core" % V.jwtScala

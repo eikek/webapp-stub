@@ -3,7 +3,7 @@ package webappstub.server.routes.contacts
 import cats.syntax.all.*
 
 import webappstub.common.model.*
-import webappstub.server.context.Context
+import webappstub.server.context.*
 import webappstub.server.data.UiTheme
 import webappstub.server.routes.Layout
 import webappstub.server.routes.Styles

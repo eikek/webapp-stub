@@ -34,10 +34,11 @@
           WEBAPPSTUB_POSTGRES_HOST = "wasdev";
           # 'open' for everyone can signup, 'closed' for no one and
           # 'invite:key' to generate invite keys
-          WEBAPPSTUB_SIGNUP_MODE = "invite:secret42";
+          WEBAPPSTUB_SIGNUP_MODE = "open";
           WEBAPPSTUB_AUTH_FIXED = "false"; # use true to remove login
           WEBAPPSTUB_REMEMBER_ME_VALID = "10 days"; # use 0s to disable remember-me
           WEBAPPSTUB_LOGGING_MIN_LEVEL = "Debug";
+          WEBAPPSTUB_SERVER_SECRET = "hex:caffee";
       };
     in {
       formatter = pkgs.alejandra;
@@ -70,6 +71,9 @@
               services.dev-keycloak = {
                 enable = true;
               };
+              services.dev-authentik = {
+                enable = true;
+              };
               networking.hostName = "wasdev";
             }
           ];
@@ -83,6 +87,9 @@
                 databases = ["webappstub"];
               };
               services.dev-keycloak = {
+                enable = true;
+              };
+              services.dev-authentik = {
                 enable = true;
               };
             }

@@ -1,6 +1,6 @@
 package webappstub.server.routes
 
-import webappstub.server.context.Context
+import webappstub.server.context.*
 import webappstub.server.data.UiTheme
 
 import htmx4s.scalatags.Bundle.*

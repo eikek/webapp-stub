@@ -3,6 +3,7 @@ package webappstub.server.config
 import java.time.ZoneId
 
 import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 
 import cats.Show
 import cats.syntax.all.*
@@ -16,6 +17,8 @@ import com.comcast.ip4s.*
 import org.http4s.Uri
 import scodec.bits.ByteVector
 import scribe.Level
+import soidc.jwt.Algorithm
+import soidc.jwt.JWK
 
 private trait ConfigDecoders:
   extension [A, B](self: ConfigDecoder[A, B])
@@ -59,6 +62,9 @@ private trait ConfigDecoders:
       else ByteVector.encodeUtf8(str).left.map(_.getMessage())
     }
 
+  given ConfigDecoder[String, JWK] =
+    ConfigDecoder[String, ByteVector].map(bv => JWK.symmetric(bv, Algorithm.HS256))
+
   given ConfigDecoder[String, UiTheme] =
     ConfigDecoder[String].emap("UiTheme")(UiTheme.fromString)
 
@@ -66,6 +72,12 @@ private trait ConfigDecoders:
     ConfigDecoder[String].emap("Duration")(s =>
       Either.catchNonFatal(Duration(s)).leftMap(_.getMessage)
     )
+
+  given ConfigDecoder[String, FiniteDuration] =
+    ConfigDecoder[String, Duration].mapOption("FiniteDuration") {
+      case d: FiniteDuration => Some(d)
+      case _                 => None
+    }
 
   given ConfigDecoder[String, SignupMode] =
     ConfigDecoder[String].emap("SignupMode")(SignupMode.fromString)

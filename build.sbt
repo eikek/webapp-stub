@@ -29,7 +29,7 @@ val sharedSettings = Seq(
 ) ++ scalafixSettings
 
 val testSettingsMUnit = Seq(
-  libraryDependencies ++= Dependencies.munit.map(_ % Test),
+  libraryDependencies ++= (Dependencies.scribe ++ Dependencies.munit).map(_ % Test),
   testFrameworks += TestFrameworks.MUnit
 )
 
@@ -80,7 +80,10 @@ val backend = project
   .settings(testSettingsMUnit)
   .settings(
     name := "webappstub-backend",
-    libraryDependencies ++= Dependencies.fs2 ++ Dependencies.bcrypt
+    libraryDependencies ++= Dependencies.fs2 ++
+      Dependencies.bcrypt ++
+      Dependencies.soidcJwt ++
+      Dependencies.soidcCore
   )
   .dependsOn(common, store % "compile->compile;test->test")
 
@@ -122,6 +125,7 @@ val server = project
         Dependencies.ciris ++
         Dependencies.scribe ++
         Dependencies.scribeSlf4j ++
+        Dependencies.soidcHttp4sRoutes ++
         Dependencies.webjars,
     buildInfoPackage := "webappstub.server",
     reStart / javaOptions ++=
@@ -153,7 +157,7 @@ val server = project
       )
     }.taskValue
   )
-  .dependsOn(common, backend, openid)
+  .dependsOn(common, backend)
 
 val root = project
   .in(file("."))

@@ -5,24 +5,24 @@ import cats.syntax.all.*
 
 import webappstub.backend.Backend
 import webappstub.common.model.*
-import webappstub.server.context.Context
+import webappstub.server.context.*
 import webappstub.server.routes.Layout
 import webappstub.server.routes.contacts.Model.*
 import webappstub.server.routes.contacts.Model.ContactEditForm
 
 import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.headers.HxTrigger
-import org.http4s.HttpRoutes
+import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
 
 final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
-  def routes(ctx: Context.Authenticated): HttpRoutes[F] =
-    val views = Views(ctx.settings.theme)
-    val notFoundPage = Layout.notFoundPage(ctx.settings.theme)
-    HttpRoutes.of {
-      case req @ GET -> Root :? Params.Query(q) +& Params.Page(p) =>
+  def routes =
+    AuthedRoutes.of[Authenticated, F] {
+      case ContextRequest(ctx, req @ GET -> Root :? Params.Query(q) +& Params.Page(p)) =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
         for {
           result <- api.search(ctx.account, q, p)
           resp <- req.headers
@@ -38,13 +38,21 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
             )
         } yield resp
 
-      case GET -> Root / "count" =>
+      case ContextRequest(ctx, req @ GET -> Root / "count") =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
         api.countAll(ctx.account).flatMap(n => Ok(views.countSnippet(n)))
 
-      case GET -> Root / "new" =>
+      case ContextRequest(ctx, req @ GET -> Root / "new") =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
         Ok(views.editContactPage(ctx, ContactEditPage.empty))
 
-      case req @ POST -> Root / "new" =>
+      case ContextRequest(ctx, req @ POST -> Root / "new") =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
+        val notFoundPage = Layout.notFoundPage(settings.theme)
+
         for {
           formInput <- req.as[ContactEditForm]
           result <- api.upsert(formInput, ctx.account, None)
@@ -59,7 +67,10 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           )
         } yield resp
 
-      case GET -> Root / Params.ContactId(id) =>
+      case ContextRequest(ctx, req @ GET -> Root / Params.ContactId(id)) =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
+        val notFoundPage = Layout.notFoundPage(settings.theme)
         for {
           c <- api.findById(id, ctx.account)
           view = c
@@ -68,7 +79,10 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           resp <- c.fold(NotFound(view))(_ => Ok(view))
         } yield resp
 
-      case GET -> Root / Params.ContactId(id) / "edit" =>
+      case ContextRequest(ctx, req @ GET -> Root / Params.ContactId(id) / "edit") =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
+        val notFoundPage = Layout.notFoundPage(settings.theme)
         for {
           contact <- api.findById(id, ctx.account)
           form = contact.map(ContactEditForm.from)
@@ -78,7 +92,10 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           resp <- contact.fold(NotFound(view))(_ => Ok(view))
         } yield resp
 
-      case req @ POST -> Root / Params.ContactId(id) / "edit" =>
+      case ContextRequest(ctx, req @ POST -> Root / Params.ContactId(id) / "edit") =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
+        val notFoundPage = Layout.notFoundPage(settings.theme)
         for {
           formInput <- req.as[ContactEditForm]
           result <- api.upsert(formInput, ctx.account, id.some)
@@ -94,7 +111,9 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           )
         } yield resp
 
-      case req @ DELETE -> Root =>
+      case ContextRequest(ctx, req @ DELETE -> Root) =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
         for {
           ids <- req.as[SelectedIds]
           _ <- ids.selectedId.traverse(api.delete)
@@ -102,7 +121,9 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           resp <- Ok(views.contactListPage(ctx, ContactListPage(all, None, 1)))
         } yield resp
 
-      case DELETE -> Root / Params.ContactId(id) =>
+      case ContextRequest(ctx, req @ DELETE -> Root / Params.ContactId(id)) =>
+        val settings = Settings.fromRequest(req)
+        val notFoundPage = Layout.notFoundPage(settings.theme)
         for {
           found <- api.delete(id)
           resp <-
@@ -110,8 +131,14 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
             else NotFound(notFoundPage)
         } yield resp
 
-      case GET -> Root / "email-check" :?
-          Params.Email(emailStr) +& Params.IdOpt(id) =>
+      case ContextRequest(
+            ctx,
+            req @ GET -> Root / "email-check" :? Params.Email(emailStr) +& Params.IdOpt(
+              id
+            )
+          ) =>
+        val settings = Settings.fromRequest(req)
+        val views = Views(settings.theme)
         for {
           result <- api.checkMail(id, ctx.account, emailStr)
           resp <- result.fold(

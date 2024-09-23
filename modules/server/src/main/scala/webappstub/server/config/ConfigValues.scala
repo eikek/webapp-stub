@@ -3,7 +3,7 @@ package webappstub.server.config
 import java.time.ZoneId
 import java.util.concurrent.atomic.AtomicReference
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 
 import cats.syntax.all.*
 import fs2.io.file.Path
@@ -17,8 +17,8 @@ import webappstub.store.PostgresConfig
 import ciris.*
 import com.comcast.ip4s.{Host, Port}
 import org.http4s.Uri
-import scodec.bits.ByteVector
 import scribe.Level
+import soidc.jwt.JWK
 
 object ConfigValues extends ConfigDecoders:
   private val envPrefix = "WEBAPPSTUB"
@@ -82,13 +82,13 @@ object ConfigValues extends ConfigDecoders:
   val baseUri = config("BASE_URI", "").as[Uri]
 
   val auth = {
-    val secret = config("SERVER_SECRET", "hex:caffee").as[ByteVector]
-    val valid = config("SESSION_VALID", "10 minutes").as[Duration]
+    val secret = config("SERVER_SECRET").as[JWK].option
+    val valid = config("SESSION_VALID", "10 minutes").as[FiniteDuration]
     val authType = config("AUTH_FIXED", "false").as[Boolean].map {
       case true  => AuthConfig.AuthenticationType.Fixed
       case false => AuthConfig.AuthenticationType.Internal
     }
-    val rememberValid = config("REMEMBER_ME_VALID", "30 days").as[Duration]
+    val rememberValid = config("REMEMBER_ME_VALID", "30 days").as[FiniteDuration]
     (secret, valid, authType, rememberValid).mapN(AuthConfig.apply)
   }
 

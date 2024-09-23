@@ -7,11 +7,15 @@ import webappstub.backend.auth.*
 import webappstub.common.model.*
 import webappstub.store.AccountRepo
 
+import soidc.borer.given
+import soidc.core.JwkGenerate
+import soidc.core.LocalFlow
+import soidc.jwt.*
+
 trait LoginService[F[_]]:
-  def loginSession(session: SessionInfo): F[LoginResult]
-  def loginSessionOnly(token: String): F[LoginResult]
-  def loginRememberMe(token: String): F[LoginResult]
+  def realm: WebappstubRealm[F]
   def loginUserPass(up: UserPass): F[LoginResult]
+  def loginRememberMe(token: RememberMeToken): F[LoginResult]
   def autoLogin: F[LoginResult]
 
 object LoginService:
@@ -19,53 +23,28 @@ object LoginService:
   def apply[F[_]: Sync](cfg: AuthConfig, repo: AccountRepo[F]): LoginService[F] =
     new LoginService[F] {
       private val logger = scribe.cats.effect[F]
+      private val secret =
+        cfg.serverSecret.getOrElse(JwkGenerate.symmetric[SyncIO](16).unsafeRunSync())
 
-      def loginSession(session: SessionInfo): F[LoginResult] =
-        logger.debug(s"Login with: $session").flatMap { _ =>
-          session match
-            case SessionInfo.SessionOnly(token) => loginSessionOnly(token)
-            case SessionInfo.RememberMe(token)  => loginRememberMe(token)
-            case SessionInfo.Session(st, rt) =>
-              loginSessionOnly(st).flatMap {
-                case r @ LoginResult.Success(_, _) => r.pure[F]
-                case LoginResult.InvalidAuth       => loginRememberMe(rt)
-              }
-        }
+      private val localRealm =
+        LocalFlow[F, JoseHeader, SimpleClaims](
+          LocalFlow.Config(
+            issuer = StringOrUri("webappstub-app"),
+            secretKey = secret,
+            sessionValidTime = cfg.sessionValid
+          )
+        )
+      private val rmeRealm =
+        LocalFlow[F, JoseHeader, SimpleClaims](
+          LocalFlow.Config(
+            issuer = StringOrUri("webappstub-app"),
+            secretKey = secret,
+            sessionValidTime = cfg.rememberMeValid
+          )
+        )
 
-      def loginSessionOnly(token: String): F[LoginResult] =
-        AuthToken.fromString(token) match {
-          case Right(at) =>
-            at.validate(cfg.serverSecret, cfg.sessionValid).flatMap {
-              case true =>
-                AuthToken.refresh(at, cfg.serverSecret).map(LoginResult.Success(_, None))
-              case false => LoginResult.InvalidAuth.pure[F]
-            }
-          case Left(_) =>
-            LoginResult.InvalidAuth.pure[F]
-        }
-
-      def loginRememberMe(token: String): F[LoginResult] =
-        if (!cfg.rememberMeEnabled) LoginResult.InvalidAuth.pure[F]
-        else
-          RememberMeToken.fromString(token) match {
-            case Left(_) => LoginResult.InvalidAuth.pure[F]
-            case Right(rt) =>
-              if (rt.validate(cfg.serverSecret))
-                repo.findByRememberMe(rt.value, cfg.rememberMeValid).flatMap {
-                  case Some(account) =>
-                    logger.debug(s"Found account $account for rememberme") >>
-                      repo.incrementRememberMeUse(rt.value) >>
-                      AuthToken
-                        .of(account.id, cfg.serverSecret)
-                        .map(at => LoginResult.Success(at, Some(rt)))
-
-                  case None =>
-                    logger
-                      .debug(s"No account found for remember me token: ${rt.value}") >>
-                      repo.deleteRememberMe(rt.value).as(LoginResult.InvalidAuth)
-                }
-              else LoginResult.InvalidAuth.pure[F]
-          }
+      def realm: WebappstubRealm[F] =
+        localRealm
 
       def loginUserPass(up: UserPass): F[LoginResult] = cfg.authType match
         case AuthConfig.AuthenticationType.Internal =>
@@ -85,18 +64,11 @@ object LoginService:
             case Some(a) if !PasswordCrypt.check(up.password, a.password) =>
               LoginResult.InvalidAuth.pure[F]
             case Some(a) =>
-              val rememberMe =
+              val rme =
                 if (cfg.rememberMeEnabled && up.rememberMe)
-                  repo
-                    .createRememberMe(a.id)
-                    .flatMap(rk => RememberMeToken.of(rk, cfg.serverSecret).map(Some(_)))
+                  makeRememberMeToken(a.id).map(_.some)
                 else None.pure[F]
-
-              rememberMe.flatMap { rme =>
-                AuthToken
-                  .of(a.id, cfg.serverSecret)
-                  .map(LoginResult.Success(_, rme))
-              }
+              (localRealm.makeToken(a.id), rme).mapN(LoginResult.Success(_, _))
         yield result
 
       def loginFixed: F[LoginResult] =
@@ -106,8 +78,39 @@ object LoginService:
           result <- acc1 match
             case None => LoginResult.InvalidAuth.pure[F]
             case Some(a) =>
-              AuthToken
-                .of(a.id, cfg.serverSecret)
+              localRealm
+                .makeToken(a.id)
                 .map(LoginResult.Success(_, None))
         yield result
+
+      def loginRememberMe(token: RememberMeToken): F[LoginResult] =
+        if (!cfg.rememberMeEnabled) LoginResult.InvalidAuth.pure[F]
+        else
+          token.rememberMeKey match
+            case None => LoginResult.InvalidAuth.pure[F]
+            case Some(rkey) =>
+              repo.findByRememberMe(rkey, cfg.rememberMeValid).flatMap {
+                case Some(account) =>
+                  logger.debug(s"Found account $account for rememberme") >>
+                    repo.incrementRememberMeUse(rkey) >>
+                    localRealm
+                      .makeToken(account.id)
+                      .map(at => LoginResult.Success(at, Some(token)))
+
+                case None =>
+                  logger
+                    .debug(s"No account found for remember me key: ${rkey}") >>
+                    repo.deleteRememberMe(rkey).as(LoginResult.InvalidAuth)
+              }
+
+      private def makeRememberMeToken(account: AccountId) =
+        for
+          rmeTok <- repo.createRememberMe(account)
+          jwt <- rmeRealm.createToken(
+            JoseHeader.jwt,
+            SimpleClaims.empty.withSubject(
+              StringOrUri(rmeTok.value)
+            )
+          )
+        yield jwt
     }

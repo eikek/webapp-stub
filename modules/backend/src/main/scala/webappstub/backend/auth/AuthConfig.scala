@@ -1,14 +1,14 @@
 package webappstub.backend.auth
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 
-import scodec.bits.ByteVector
+import soidc.jwt.JWK
 
 case class AuthConfig(
-    serverSecret: ByteVector,
-    sessionValid: Duration,
+    serverSecret: Option[JWK],
+    sessionValid: FiniteDuration,
     authType: AuthConfig.AuthenticationType,
-    rememberMeValid: Duration
+    rememberMeValid: FiniteDuration
 ):
   def rememberMeEnabled: Boolean = rememberMeValid > Duration.Zero
 

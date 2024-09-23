@@ -26,4 +26,4 @@ object WebappstubRememberMe:
     HeaderReader.from[F, WebappstubRememberMe](req, Some(cookieName))
 
   def fromToken(t: RememberMeToken): WebappstubRememberMe =
-    WebappstubRememberMe(t.asString)
+    WebappstubRememberMe(t.toString)
