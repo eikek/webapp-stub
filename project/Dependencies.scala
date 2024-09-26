@@ -42,6 +42,10 @@ object Dependencies {
     "com.github.eikek" %% "soidc-core" % V.soidc
   )
 
+  val soidcHttp4sClient = Seq(
+    "com.github.eikek" %% "soidc-http4s-client" % V.soidc
+  )
+
   val soidcHttp4sRoutes = Seq(
     "com.github.eikek" %% "soidc-http4s-routes" % V.soidc
   )

@@ -11,6 +11,7 @@ import webappstub.common.model.*
 
 import skunk.Codec
 import skunk.codec.all as c
+import soidc.jwt.JWS
 
 object Codecs:
   val instant: Codec[Instant] =
@@ -53,8 +54,18 @@ object Codecs:
   val contact: Codec[Contact] =
     (contactId *: accountId *: name *: email.opt *: phoneNumber.opt).to[Contact]
 
+  val provider: Codec[Provider] =
+    c.varchar.imap(Provider.apply)(_.value)
+
+  val externalAccountId: Codec[ExternalAccountId] =
+    (provider *: c.varchar).to[ExternalAccountId]
+
+  val jws: Codec[JWS] =
+    c.varchar.eimap(JWS.fromString)(_.compact)
+
   val account: Codec[Account] =
-    (accountId *: accountState *: loginName *: password *: instant).to[Account]
+    (accountId *: accountState *: loginName *: password *: externalAccountId.opt *: jws.opt *: instant)
+      .to[Account]
 
   val inviteKey: Codec[InviteKey] =
     c.varchar.eimap(InviteKey.fromString)(_.value)

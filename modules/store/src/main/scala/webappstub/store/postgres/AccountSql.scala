@@ -12,14 +12,15 @@ import skunk.codec.all.*
 import skunk.implicits.*
 
 private object AccountSql:
-  private val cols = sql"a.id, s.name, a.login_name, a.password, a.created_at"
+  private val cols =
+    sql"a.id, s.name, a.login_name, a.password, a.provider, a.external_id, a.refresh_token, a.created_at"
 
   private val selectStateId =
     sql"""(select id from "account_state" where name = ${c.accountState})"""
 
   val insert: Query[NewAccount, (AccountId, Instant)] =
-    sql"""insert into "account" (state_id, login_name, password)
-    values ($selectStateId, ${c.loginName}, ${c.password})
+    sql"""insert into "account" (state_id, login_name, password, provider, external_id)
+    values ($selectStateId, ${c.loginName}, ${c.password}, ${c.externalAccountId.opt}, ${c.jws.opt})
     returning id, created_at
     """
       .query(c.accountId *: c.instant)
@@ -72,6 +73,20 @@ private object AccountSql:
       AND (r.created_at + ${c.duration}) > now()
       AND s.name = ${c.accountState}
     """.query(c.account)
+
+  val findByExternalId: Query[(ExternalAccountId, AccountState), Account] =
+    sql"""
+    select $cols
+    from "account" a
+    inner join "account_state" s on a.state_id = s.id
+    where a.provider = ${c.provider}
+      AND a.external_id = ${varchar}
+      AND s.name = ${c.accountState}
+    """
+      .query(c.account)
+      .contramap[(ExternalAccountId, AccountState)] { case (eId, state) =>
+        eId.provider *: eId.id *: state *: EmptyTuple
+      }
 
   val deleteRememberMe: Command[RememberMeKey] =
     sql"""delete from "remember_me" where ident = ${c.rememberMeKey}""".command

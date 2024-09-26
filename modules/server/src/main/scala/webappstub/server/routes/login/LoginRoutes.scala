@@ -4,7 +4,7 @@ import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.backend.LoginService
-import webappstub.backend.auth.LoginResult
+import webappstub.backend.auth.*
 import webappstub.server.Config
 import webappstub.server.common.*
 import webappstub.server.context.*
@@ -17,19 +17,42 @@ import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
+import soidc.http4s.client.ByteEntityDecoder
+import soidc.http4s.routes.AuthCodeFlow
+import soidc.http4s.routes.AuthCodeFlow.Result.Success
 import soidc.http4s.routes.JwtCookie
 
 final class LoginRoutes[F[_]: Async](
     login: LoginService[F],
     config: Config,
     uiCfg: UiConfig
-) extends Htmx4sDsl[F]:
-
+) extends Htmx4sDsl[F]
+    with ByteEntityDecoder:
+  private val logger = scribe.cats.effect[F]
   private val api = LoginApi[F](login)
   private val cookieName = "webappstub_auth"
   private val rememberMeCookie = api.rememberMeCookie
 
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
+    case ContextRequest(context, req @ GET -> Root / "openid" / name) =>
+      val baseUrl = ClientRequestInfo.getBaseUrl(config, req) / "login" / "openid"
+      api
+        .openIdRealm(baseUrl, logger, name)
+        .semiflatMap { flow =>
+          flow.run(req) {
+            case Left(err) => UnprocessableEntity(err.toString)
+            case Right(AuthCodeFlow.Result.Success(token, _)) =>
+              val cookie = JwtCookie
+                .create(cookieName, token.jws, baseUrl)
+                .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
+
+              // check if account exists, if not redirect to signup
+              // if yes, redirect to contact page
+              ???
+          }
+        }
+        .getOrElseF(NotFound())
+
     case ContextRequest(ctx, req @ GET -> Root) =>
       val settings = Settings.fromRequest(req)
       if (ctx.isAuthenticated) TemporaryRedirect(Location(uri"/app/contacts"))

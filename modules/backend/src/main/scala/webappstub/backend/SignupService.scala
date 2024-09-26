@@ -55,5 +55,5 @@ object SignupService:
       req: SignupRequest
   ): F[SignupResult] =
     repo
-      .insert(NewAccount.active(req.login, PasswordCrypt.crypt(req.password)))
+      .insert(NewAccount.internalActive(req.login, PasswordCrypt.crypt(req.password)))
       .map(_.fold(SignupResult.LoginExists)(SignupResult.Success(_)))

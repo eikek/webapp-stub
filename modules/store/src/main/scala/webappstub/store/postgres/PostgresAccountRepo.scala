@@ -32,6 +32,9 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
   def findByRememberMe(key: RememberMeKey, valid: Duration): F[Option[Account]] =
     session.use(_.option(AccountSql.findByRememberMe)((key, valid, AccountState.Active)))
 
+  def findByExternalId(id: ExternalAccountId): F[Option[Account]] =
+    session.use(_.option(AccountSql.findByExternalId)((id, AccountState.Active)))
+
   def insert(account: NewAccount): F[Option[Account]] =
     session.inTx(
       _.unique(AccountSql.insert)(account)

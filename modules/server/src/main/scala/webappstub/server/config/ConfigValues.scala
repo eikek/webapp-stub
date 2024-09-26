@@ -84,12 +84,8 @@ object ConfigValues extends ConfigDecoders:
   val auth = {
     val secret = config("SERVER_SECRET").as[JWK].option
     val valid = config("SESSION_VALID", "10 minutes").as[FiniteDuration]
-    val authType = config("AUTH_FIXED", "false").as[Boolean].map {
-      case true  => AuthConfig.AuthenticationType.Fixed
-      case false => AuthConfig.AuthenticationType.Internal
-    }
     val rememberValid = config("REMEMBER_ME_VALID", "30 days").as[FiniteDuration]
-    (secret, valid, authType, rememberValid).mapN(AuthConfig.apply)
+    ??? // (secret, valid, authType, rememberValid).mapN(AuthConfig.apply)
   }
 
   val signup = {

@@ -56,7 +56,7 @@ val common = project
   .settings(
     name := "webappstub-common",
     libraryDependencies ++=
-      Dependencies.fs2 ++ Dependencies.borer
+      Dependencies.fs2 ++ Dependencies.borer ++ Dependencies.soidcJwt
   )
 
 val store = project
@@ -83,7 +83,9 @@ val backend = project
     libraryDependencies ++= Dependencies.fs2 ++
       Dependencies.bcrypt ++
       Dependencies.soidcJwt ++
-      Dependencies.soidcCore
+      Dependencies.soidcCore ++
+      Dependencies.http4sClient ++
+      Dependencies.soidcHttp4sClient
   )
   .dependsOn(common, store % "compile->compile;test->test")
 

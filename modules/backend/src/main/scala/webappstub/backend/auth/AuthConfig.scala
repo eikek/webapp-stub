@@ -2,27 +2,29 @@ package webappstub.backend.auth
 
 import scala.concurrent.duration.*
 
-import soidc.jwt.JWK
+import soidc.core.model.*
+import soidc.jwt.{JWK, Uri}
 
 case class AuthConfig(
-    serverSecret: Option[JWK],
-    sessionValid: FiniteDuration,
-    authType: AuthConfig.AuthenticationType,
-    rememberMeValid: FiniteDuration
+    internal: AuthConfig.Internal,
+    openId: Map[String, AuthConfig.OpenId]
 ):
-  def rememberMeEnabled: Boolean = rememberMeValid > Duration.Zero
+  def rememberMeEnabled: Boolean =
+    internal.enabled && internal.rememberMeValid > Duration.Zero
+
+  def authDisabled: Boolean = !internal.enabled && openId.isEmpty
 
 object AuthConfig {
-
-  final case class Proxy(
+  final case class Internal(
       enabled: Boolean,
-      userHeader: String,
-      emailHeader: Option[String]
-  ) {
-    def disabled = !enabled
-  }
-
-  enum AuthenticationType:
-    case Fixed
-    case Internal
+      serverSecret: Option[JWK],
+      sessionValid: FiniteDuration,
+      rememberMeValid: FiniteDuration
+  )
+  final case class OpenId(
+      providerUrl: Uri,
+      clientId: ClientId,
+      clientSecret: ClientSecret,
+      scope: Option[ScopeList]
+  )
 }

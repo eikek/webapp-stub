@@ -40,8 +40,11 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   val withAuth = JwtAuthMiddleware
     .builder[F, JoseHeader, SimpleClaims]
     .withGeToken(GetToken.anyOf(GetToken.bearer, GetToken.cookie("webappstub_auth")))
-    .withValidator(backend.login.realm.validator)
-    .withRefresh(backend.login.realm.jwtRefresh, _.updateCookie("webappstub_auth", uri""))
+    .withValidator(backend.login.internalRealm.validator)
+    .withRefresh(
+      backend.login.internalRealm.jwtRefresh,
+      _.updateCookie("webappstub_auth", uri"")
+    )
 
   val uiConfig = UiConfig.fromConfig(config)
   val login = LoginRoutes[F](backend.login, config, uiConfig)

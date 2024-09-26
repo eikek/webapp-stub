@@ -7,33 +7,49 @@ import webappstub.backend.auth.*
 import webappstub.common.model.*
 import webappstub.store.AccountRepo
 
+import org.http4s.Uri
+import org.http4s.client.Client
 import soidc.borer.given
+import soidc.core.AuthorizationCodeFlow as ACF
 import soidc.core.JwkGenerate
 import soidc.core.JwtValidator
 import soidc.core.LocalFlow
-import soidc.jwt.*
+import soidc.http4s.client.Http4sClient
+import soidc.jwt.{Uri as JwtUri, *}
 
 trait LoginService[F[_]]:
-  def realm: WebappstubRealm[F]
+  def internalRealm: WebappstubRealm[F]
+  def openIdRealms(
+      baseUri: Uri,
+      resumeSegment: String = "resume"
+  ): F[Map[String, OpenIdRealm[F]]]
   def loginUserPass(up: UserPass): F[LoginResult]
   def loginRememberMe(token: RememberMeToken): F[LoginResult]
-  def rememberMeValidator: JwtValidator[F, JoseHeader, SimpleClaims]
+  def rememberMeValidator: TokenValidator[F]
   def autoLogin: F[LoginResult]
+//  def loginExternal(token: AuthToken): F[]
 
 object LoginService:
 
-  def apply[F[_]: Sync](cfg: AuthConfig, repo: AccountRepo[F]): LoginService[F] =
+  def apply[F[_]: Sync](
+      cfg: AuthConfig,
+      repo: AccountRepo[F],
+      client: Client[F]
+  ): LoginService[F] =
     new LoginService[F] {
+      private val tokenStore = AccountTokenStore[F](repo)
       private val logger = scribe.cats.effect[F]
       private val secret =
-        cfg.serverSecret.getOrElse(JwkGenerate.symmetric[SyncIO](16).unsafeRunSync())
+        cfg.internal.serverSecret.getOrElse(
+          JwkGenerate.symmetric[SyncIO](16).unsafeRunSync()
+        )
 
       private val localRealm =
         LocalFlow[F, JoseHeader, SimpleClaims](
           LocalFlow.Config(
             issuer = StringOrUri("webappstub-app"),
             secretKey = secret,
-            sessionValidTime = cfg.sessionValid
+            sessionValidTime = cfg.internal.sessionValid
           )
         )
       private val rmeRealm =
@@ -41,19 +57,34 @@ object LoginService:
           LocalFlow.Config(
             issuer = StringOrUri("webappstub-app"),
             secretKey = secret,
-            sessionValidTime = cfg.rememberMeValid
+            sessionValidTime = cfg.internal.rememberMeValid
           )
         )
 
-      def realm: WebappstubRealm[F] =
-        localRealm
+      def openIdRealms(
+          baseUri: Uri,
+          resumeSegment: String
+      ): F[Map[String, OpenIdRealm[F]]] = cfg.openId.toList
+        .traverse { case (name, c) =>
+          val acfCfg = ACF.Config(
+            c.clientId,
+            c.clientSecret.some,
+            JwtUri.unsafeFromString((baseUri / name / resumeSegment).renderString),
+            c.providerUrl,
+            secret,
+            c.scope
+          )
+          ACF(acfCfg, Http4sClient(client), tokenStore, SoidcLogger(logger)).map(a =>
+            name -> a
+          )
+        }
+        .map(_.toMap)
 
-      def loginUserPass(up: UserPass): F[LoginResult] = cfg.authType match
-        case AuthConfig.AuthenticationType.Internal =>
-          loginInternal(up)
+      def internalRealm: WebappstubRealm[F] = localRealm
 
-        case AuthConfig.AuthenticationType.Fixed =>
-          loginFixed
+      def loginUserPass(up: UserPass): F[LoginResult] =
+        if (cfg.authDisabled) loginFixed
+        else loginInternal(up)
 
       def autoLogin: F[LoginResult] = loginFixed
 
@@ -94,7 +125,7 @@ object LoginService:
           token.rememberMeKey match
             case None => LoginResult.InvalidAuth.pure[F]
             case Some(rkey) =>
-              repo.findByRememberMe(rkey, cfg.rememberMeValid).flatMap {
+              repo.findByRememberMe(rkey, cfg.internal.rememberMeValid).flatMap {
                 case Some(account) =>
                   logger.debug(s"Found account $account for rememberme") >>
                     repo.incrementRememberMeUse(rkey) >>

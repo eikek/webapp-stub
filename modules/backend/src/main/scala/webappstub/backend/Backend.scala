@@ -8,6 +8,7 @@ import webappstub.store.*
 import webappstub.store.migration.*
 import webappstub.store.postgres.*
 
+import org.http4s.ember.client.EmberClientBuilder
 import org.typelevel.otel4s.trace.Tracer
 
 trait Backend[F[_]]:
@@ -27,9 +28,10 @@ object Backend:
       contactRepo = new PostgresContactRepo[F](session)
       accountRepo = new PostgresAccountRepo[F](session)
       _contacts <- ContactService[F](contactRepo)
+      client <- EmberClientBuilder.default[F].build
     yield new Backend[F] {
       val config = cfg
       val contacts = _contacts
-      val login = LoginService(cfg.auth, accountRepo)
+      val login = LoginService(cfg.auth, accountRepo, client)
       val signup = SignupService(cfg.signup, accountRepo)
     }

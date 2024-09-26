@@ -23,8 +23,12 @@ object Account:
       "state_id" int not null,
       "login_name" varchar not null,
       "password" varchar not null,
+      "provider" varchar,
+      "external_id" varchar,
+      "refresh_token" varchar,
       "created_at" timestamptz not null default now(),
       constraint "account_login_name_uniq" unique("login_name"),
+      constraint "provider_external_id_uniq" unique("provider", "external_id"),
       constraint "account_state_id_fk"
         foreign key ("state_id")
         references "account_state"("id")

@@ -1,22 +1,27 @@
 package webappstub.server.routes.login
 
-import cats.Monad
+import cats.data.OptionT
 import cats.data.Validated
+import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.backend.LoginService
-import webappstub.backend.auth.LoginResult
-import webappstub.backend.auth.RememberMeToken
+import webappstub.backend.auth.*
 import webappstub.server.routes.login.LoginError.*
 
 import org.http4s.Request
+import org.http4s.Uri
+import scribe.Scribe
 import soidc.borer.given
+import soidc.http4s.client.ByteEntityDecoder
+import soidc.http4s.routes.AuthCodeFlow
 import soidc.http4s.routes.GetToken
 import soidc.http4s.routes.JwtAuth
 import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
 
-final class LoginApi[F[_]: Monad](login: LoginService[F]):
+final private class LoginApi[F[_]: Sync](login: LoginService[F])
+    extends ByteEntityDecoder:
   val rememberMeCookie = "webappstub_remember_me"
   private val rememberMeAuth = JwtAuth
     .builder[F, JoseHeader, SimpleClaims]
@@ -34,3 +39,18 @@ final class LoginApi[F[_]: Monad](login: LoginService[F]):
 
   def doRememberMeLogin(rkey: RememberMeToken) =
     login.loginRememberMe(rkey)
+
+  def openIdRealm(
+      baseUri: Uri,
+      logger: Scribe[F],
+      name: String
+  ): OptionT[F, AuthCodeFlow[F, JoseHeader, SimpleClaims]] =
+    val resumeSegment = "resume"
+    OptionT(login.openIdRealms(baseUri, resumeSegment).map(_.get(name)))
+      .semiflatMap(acf =>
+        AuthCodeFlow(
+          AuthCodeFlow.Config(baseUri, resumeSegment),
+          acf,
+          SoidcLogger(logger)
+        )
+      )

@@ -10,6 +10,7 @@ trait AccountRepo[F[_]]:
   def findByLogin(login: LoginName, state: Option[AccountState]): F[Option[Account]]
   def findById(id: AccountId): F[Option[Account]]
   def findByRememberMe(key: RememberMeKey, valid: Duration): F[Option[Account]]
+  def findByExternalId(id: ExternalAccountId): F[Option[Account]]
   def insert(account: NewAccount): F[Option[Account]]
   def update(id: AccountId, account: NewAccount): F[Unit]
   def createInviteKey: F[InviteKey]
