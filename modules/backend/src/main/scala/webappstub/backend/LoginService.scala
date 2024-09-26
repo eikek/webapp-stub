@@ -23,11 +23,11 @@ trait LoginService[F[_]]:
       baseUri: Uri,
       resumeSegment: String = "resume"
   ): F[Map[String, OpenIdRealm[F]]]
-  def loginUserPass(up: UserPass): F[LoginResult]
+  def loginInternal(up: UserPass): F[LoginResult]
   def loginRememberMe(token: RememberMeToken): F[LoginResult]
   def rememberMeValidator: TokenValidator[F]
   def autoLogin: F[LoginResult]
-//  def loginExternal(token: AuthToken): F[]
+  def loginExternal(token: AuthToken): F[LoginResult]
 
 object LoginService:
 
@@ -82,18 +82,21 @@ object LoginService:
 
       def internalRealm: WebappstubRealm[F] = localRealm
 
-      def loginUserPass(up: UserPass): F[LoginResult] =
-        if (cfg.authDisabled) loginFixed
-        else loginInternal(up)
-
-      def autoLogin: F[LoginResult] = loginFixed
+      def loginExternal(token: AuthToken): F[LoginResult] =
+        ExternalAccountId.fromToken(token) match
+          case None => LoginResult.InvalidAuth.pure[F]
+          case Some(id) =>
+            repo.findByExternalId(id).map {
+              case Some(_) => LoginResult.Success(token, None)
+              case None => LoginResult.AccountMissing
+            }
 
       def loginInternal(up: UserPass): F[LoginResult] =
         for
           acc1 <- repo.findByLogin(up.login, Some(AccountState.Active))
           _ <- logger.debug(s"Found account: $acc1")
           result <- acc1 match
-            case None => LoginResult.InvalidAuth.pure[F]
+            case None => LoginResult.AccountMissing.pure[F]
             case Some(a) if !PasswordCrypt.check(up.password, a.password) =>
               LoginResult.InvalidAuth.pure[F]
             case Some(a) =>
@@ -104,12 +107,12 @@ object LoginService:
               (localRealm.makeToken(a.id), rme).mapN(LoginResult.Success(_, _))
         yield result
 
-      def loginFixed: F[LoginResult] =
+      def autoLogin: F[LoginResult] =
         for
           acc1 <- repo.findByLogin(LoginName.autoUser, Some(AccountState.Active))
           _ <- logger.debug(s"Found account: $acc1")
           result <- acc1 match
-            case None => LoginResult.InvalidAuth.pure[F]
+            case None => LoginResult.AccountMissing.pure[F]
             case Some(a) =>
               localRealm
                 .makeToken(a.id)
@@ -136,7 +139,7 @@ object LoginService:
                 case None =>
                   logger
                     .debug(s"No account found for remember me key: ${rkey}") >>
-                    repo.deleteRememberMe(rkey).as(LoginResult.InvalidAuth)
+                    repo.deleteRememberMe(rkey).as(LoginResult.AccountMissing)
               }
 
       private def makeRememberMeToken(account: AccountId) =

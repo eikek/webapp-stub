@@ -1,7 +1,6 @@
 package webappstub.backend
 
-import webappstub.common.model.AccountId
-import webappstub.common.model.RememberMeKey
+import webappstub.common.model.*
 
 import soidc.core.AuthorizationCodeFlow
 import soidc.core.JwtValidator
@@ -18,20 +17,10 @@ package object auth {
   type OpenIdRealm[F[_]] = AuthorizationCodeFlow[F, JoseHeader, SimpleClaims]
   type TokenValidator[F[_]] = JwtValidator[F, JoseHeader, SimpleClaims]
 
-  type AuthToken = JWSDecoded[JoseHeader, SimpleClaims]
-  type RememberMeToken = JWSDecoded[JoseHeader, SimpleClaims]
-
   extension [F[_]](self: LocalFlow[F, JoseHeader, SimpleClaims])
     def makeToken(accountId: AccountId): F[AuthToken] =
       self.createToken(
         JoseHeader.jwt,
         SimpleClaims.empty.withSubject(StringOrUri(accountId.value.toString()))
       )
-
-  extension (self: AuthToken)
-    def accountId: AccountId = AccountId(
-      self.claims.subject.map(_.value.toLong).getOrElse(Long.MinValue)
-    )
-    def rememberMeKey: Option[RememberMeKey] =
-      self.claims.subject.map(_.value).flatMap(s => RememberMeKey.fromString(s).toOption)
 }

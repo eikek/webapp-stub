@@ -35,7 +35,7 @@ final private class LoginApi[F[_]: Sync](login: LoginService[F])
   def doLogin(in: Model.UserPasswordForm): F[LoginValid[LoginResult]] =
     in.toModel match
       case e @ Validated.Invalid(_) => e.pure[F]
-      case Validated.Valid(up)      => login.loginUserPass(up).map(_.valid)
+      case Validated.Valid(up)      => login.loginInternal(up).map(_.valid)
 
   def doRememberMeLogin(rkey: RememberMeToken) =
     login.loginRememberMe(rkey)
