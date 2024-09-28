@@ -15,6 +15,7 @@ import scodec.bits.ByteVector
 import skunk.Session
 import skunk.SqlState
 import skunk.data.Completion
+import soidc.jwt.JWS
 
 final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
     extends AccountRepo[F]
@@ -48,6 +49,9 @@ final class PostgresAccountRepo[F[_]: Sync](session: Resource[F, Session[F]])
 
   def update(id: AccountId, account: NewAccount): F[Unit] =
     session.inTx(_.execute(AccountSql.update)(id -> account).void)
+
+  def setRefreshToken(id: ExternalAccountId, token: JWS): F[Unit] =
+    session.inTx(_.execute(AccountSql.updateRefreshToken)(id -> token).void)
 
   def createInviteKey: F[InviteKey] =
     randomString.flatMap { str =>

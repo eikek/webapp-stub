@@ -6,6 +6,7 @@ import webappstub.server.data.UiTheme
 import htmx4s.scalatags.Bundle.*
 import scalatags.Text.TypedTag
 import scalatags.Text.all.doctype
+import org.http4s.Uri
 
 object Layout:
   def styleMain(withTopBar: Boolean) = {
@@ -113,3 +114,15 @@ object Layout:
     )
 
   def notFoundPage(theme: UiTheme) = Layout("Not Found", theme)(notFound)
+
+  def clientRedirect(uri: Uri) =
+    doctype("html")(
+      html(
+        head(
+          meta(
+            attr.httpEquiv := "refresh",
+            attr.content := s"0; url='${uri.renderString}'"
+          )
+        )
+      )
+    )

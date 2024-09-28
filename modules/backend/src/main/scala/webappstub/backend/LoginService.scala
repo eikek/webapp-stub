@@ -47,7 +47,7 @@ object LoginService:
       private val localRealm =
         LocalFlow[F, JoseHeader, SimpleClaims](
           LocalFlow.Config(
-            issuer = StringOrUri("webappstub-app"),
+            issuer = Provider.internal.uri,
             secretKey = secret,
             sessionValidTime = cfg.internal.sessionValid
           )
@@ -55,7 +55,7 @@ object LoginService:
       private val rmeRealm =
         LocalFlow[F, JoseHeader, SimpleClaims](
           LocalFlow.Config(
-            issuer = StringOrUri("webappstub-app"),
+            issuer = Provider.internal.uri,
             secretKey = secret,
             sessionValidTime = cfg.internal.rememberMeValid
           )
@@ -69,7 +69,7 @@ object LoginService:
           val acfCfg = ACF.Config(
             c.clientId,
             c.clientSecret.some,
-            JwtUri.unsafeFromString((baseUri / name / resumeSegment).renderString),
+            JwtUri.unsafeFromString((baseUri / resumeSegment).renderString),
             c.providerUrl,
             secret,
             c.scope

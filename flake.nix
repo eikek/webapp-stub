@@ -35,10 +35,16 @@
           # 'open' for everyone can signup, 'closed' for no one and
           # 'invite:key' to generate invite keys
           WEBAPPSTUB_SIGNUP_MODE = "open";
-          WEBAPPSTUB_AUTH_FIXED = "false"; # use true to remove login
-          WEBAPPSTUB_REMEMBER_ME_VALID = "10 days"; # use 0s to disable remember-me
+
+          WEBAPPSTUB_AUTH_INTERNAL_ENABLED = "true";
+          WEBAPPSTUB_AUTH_INTERNAL_REMEMBER_ME_VALID = "10 days"; # use 0s to disable remember-me
           WEBAPPSTUB_LOGGING_MIN_LEVEL = "Debug";
           WEBAPPSTUB_SERVER_SECRET = "hex:caffee";
+
+          WEBAPPSTUB_AUTH_OPENID_PROVIDERS = "keycloak";
+          WEBAPPSTUB_OPENID_KEYCLOAK_PROVIDER_URI = "http://wasdev:8180/realms/Webappstub";
+          WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_ID = "webappstub";
+          WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_SECRET = "Jgcq6HhtFRs8sboHu81VpRrgYiEjyen4";
       };
     in {
       formatter = pkgs.alejandra;

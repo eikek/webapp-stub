@@ -10,6 +10,7 @@ import webappstub.store.postgres.Codecs as c
 import skunk.*
 import skunk.codec.all.*
 import skunk.implicits.*
+import soidc.jwt.JWS
 
 private object AccountSql:
   private val cols =
@@ -19,7 +20,7 @@ private object AccountSql:
     sql"""(select id from "account_state" where name = ${c.accountState})"""
 
   val insert: Query[NewAccount, (AccountId, Instant)] =
-    sql"""insert into "account" (state_id, login_name, password, provider, external_id)
+    sql"""insert into "account" (state_id, login_name, password, provider, external_id, refresh_token)
     values ($selectStateId, ${c.loginName}, ${c.password}, ${c.externalAccountId.opt}, ${c.jws.opt})
     returning id, created_at
     """
@@ -39,12 +40,25 @@ private object AccountSql:
         nc.state *: nc.login *: nc.password *: id *: EmptyTuple
       }
 
+  val updateRefreshToken: Command[(ExternalAccountId, JWS)] =
+    sql"""
+    update "account"
+    set
+      refresh_token = ${c.jws}
+    where
+      provider = ${c.provider} AND
+      external_id = ${varchar}
+    """.command
+      .contramap[(ExternalAccountId, JWS)] { case (id, token) =>
+        token *: id.provider *: id.id *: EmptyTuple
+      }
+
   val findById: Query[AccountId, Account] =
     sql"""
     select $cols
     from "account" a
     inner join "account_state" s on a.state_id = s.id
-    where id = ${c.accountId}
+    where a.id = ${c.accountId}
     """.query(c.account)
 
   val findByLogin: Query[LoginName, Account] =

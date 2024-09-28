@@ -29,7 +29,7 @@ final class SignupRoutes[F[_]: Async](
       val settings = Settings.fromRequest(req)
       Ok(
         Layout("Signup", settings.theme)(
-          View.view(uiCfg, settings, signupCfg.mode, None)
+          View.view(uiCfg, settings, signupCfg.mode, Model.SignupForm(), None)
         )
       )
 

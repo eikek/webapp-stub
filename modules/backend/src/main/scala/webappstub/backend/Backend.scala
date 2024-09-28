@@ -13,6 +13,7 @@ import org.typelevel.otel4s.trace.Tracer
 
 trait Backend[F[_]]:
   def config: BackendConfig
+  def accountRepo: AccountRepo[F]
   def login: LoginService[F]
   def signup: SignupService[F]
   def contacts: ContactService[F]
@@ -26,12 +27,13 @@ object Backend:
       session <- SkunkSession[F](cfg.database)
       _ <- Resource.eval(session.use(s => SchemaMigration(s).migrate))
       contactRepo = new PostgresContactRepo[F](session)
-      accountRepo = new PostgresAccountRepo[F](session)
+      _accountRepo = new PostgresAccountRepo[F](session)
       _contacts <- ContactService[F](contactRepo)
       client <- EmberClientBuilder.default[F].build
     yield new Backend[F] {
       val config = cfg
       val contacts = _contacts
+      val accountRepo = _accountRepo
       val login = LoginService(cfg.auth, accountRepo, client)
       val signup = SignupService(cfg.signup, accountRepo)
     }

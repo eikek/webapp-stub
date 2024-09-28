@@ -34,7 +34,7 @@ object Model:
         case Some(k) =>
           InviteKey.fromString(k).toValidatedNel.keyed(Key.Invite).map(_.some)
 
-      (login, pw, ik).mapN(SignupRequest.apply)
+      (login, pw, ik).mapN(SignupRequest.internal)
     }
 
   object SignupForm:

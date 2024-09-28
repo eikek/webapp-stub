@@ -74,11 +74,11 @@ private object ContactSql:
     sql"""
     select $contactCols
     from "contact" c
-    where owner_id = ${c.accountId}
-      lower(c.first_name) like $varchar or
+    where owner_id = ${c.accountId} and
+      (lower(c.first_name) like $varchar or
       lower(c.last_name) like $varchar or
       lower(c.email) like $varchar or
-      lower(c.phone) like $varchar
+      lower(c.phone) like $varchar)
     order by c.last_name, c.first_name
     offset $int8 limit $int8
     """

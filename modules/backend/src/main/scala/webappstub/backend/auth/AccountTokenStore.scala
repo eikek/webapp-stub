@@ -19,4 +19,6 @@ final class AccountTokenStore[F[_]: Monad](repo: AccountRepo[F])
       .value
 
   def setRefreshToken(jwt: AuthToken, refreshToken: JWS): F[Unit] =
-    ???
+    OptionT
+      .fromOption[F](ExternalAccountId.fromToken(jwt))
+      .foldF(Monad[F].pure(()))(id => repo.setRefreshToken(id, refreshToken))

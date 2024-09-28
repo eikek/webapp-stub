@@ -17,8 +17,8 @@ import com.comcast.ip4s.*
 import org.http4s.Uri
 import scodec.bits.ByteVector
 import scribe.Level
-import soidc.jwt.Algorithm
-import soidc.jwt.JWK
+import soidc.jwt.{Uri as JwtUri, *}
+import soidc.core.model.*
 
 private trait ConfigDecoders:
   extension [A, B](self: ConfigDecoder[A, B])
@@ -64,6 +64,18 @@ private trait ConfigDecoders:
 
   given ConfigDecoder[String, JWK] =
     ConfigDecoder[String, ByteVector].map(bv => JWK.symmetric(bv, Algorithm.HS256))
+
+  given ConfigDecoder[String, JwtUri] =
+    ConfigDecoder[String].emap("JwtUri")(JwtUri.fromString)
+
+  given ConfigDecoder[String, ClientId] =
+    ConfigDecoder[String].map(ClientId.apply)
+
+  given ConfigDecoder[String, ClientSecret] =
+    ConfigDecoder[String].map(ClientSecret.apply)
+
+  given ConfigDecoder[String, ScopeList] =
+    ConfigDecoder[String].map(ScopeList.fromString)
 
   given ConfigDecoder[String, UiTheme] =
     ConfigDecoder[String].emap("UiTheme")(UiTheme.fromString)

@@ -19,12 +19,12 @@ import org.http4s.scalatags.*
 
 final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
   def routes =
-    AuthedRoutes.of[Authenticated, F] {
+    AuthedRoutes.of[Context.Account, F] {
       case ContextRequest(ctx, req @ GET -> Root :? Params.Query(q) +& Params.Page(p)) =>
         val settings = Settings.fromRequest(req)
         val views = Views(settings.theme)
         for {
-          result <- api.search(ctx.account, q, p)
+          result <- api.search(ctx.id, q, p)
           resp <- req.headers
             .get[HxTrigger]
             .whenIn(views.searchControls)(
@@ -41,7 +41,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
       case ContextRequest(ctx, req @ GET -> Root / "count") =>
         val settings = Settings.fromRequest(req)
         val views = Views(settings.theme)
-        api.countAll(ctx.account).flatMap(n => Ok(views.countSnippet(n)))
+        api.countAll(ctx.id).flatMap(n => Ok(views.countSnippet(n)))
 
       case ContextRequest(ctx, req @ GET -> Root / "new") =>
         val settings = Settings.fromRequest(req)
@@ -55,7 +55,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
 
         for {
           formInput <- req.as[ContactEditForm]
-          result <- api.upsert(formInput, ctx.account, None)
+          result <- api.upsert(formInput, ctx.id, None)
           resp <- result.fold(Ok(notFoundPage))(
             _.fold(
               errs =>
@@ -72,7 +72,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
         val views = Views(settings.theme)
         val notFoundPage = Layout.notFoundPage(settings.theme)
         for {
-          c <- api.findById(id, ctx.account)
+          c <- api.findById(id, ctx.id)
           view = c
             .map(ContactShowPage.apply)
             .fold(notFoundPage)(views.showContactPage(ctx, _))
@@ -84,7 +84,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
         val views = Views(settings.theme)
         val notFoundPage = Layout.notFoundPage(settings.theme)
         for {
-          contact <- api.findById(id, ctx.account)
+          contact <- api.findById(id, ctx.id)
           form = contact.map(ContactEditForm.from)
           view = form.fold(notFoundPage)(c =>
             views.editContactPage(ctx, ContactEditPage(id.some, c, None))
@@ -98,7 +98,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
         val notFoundPage = Layout.notFoundPage(settings.theme)
         for {
           formInput <- req.as[ContactEditForm]
-          result <- api.upsert(formInput, ctx.account, id.some)
+          result <- api.upsert(formInput, ctx.id, id.some)
           resp <- result.fold(Ok(notFoundPage))(
             _.fold(
               errs =>
@@ -117,7 +117,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
         for {
           ids <- req.as[SelectedIds]
           _ <- ids.selectedId.traverse(api.delete)
-          all <- api.search(ctx.account, None, None)
+          all <- api.search(ctx.id, None, None)
           resp <- Ok(views.contactListPage(ctx, ContactListPage(all, None, 1)))
         } yield resp
 
@@ -140,7 +140,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
         val settings = Settings.fromRequest(req)
         val views = Views(settings.theme)
         for {
-          result <- api.checkMail(id, ctx.account, emailStr)
+          result <- api.checkMail(id, ctx.id, emailStr)
           resp <- result.fold(
             errs => Ok(views.errorList(errs.some, ContactError.Key.Email)),
             _ => Ok(views.errorList(Nil))

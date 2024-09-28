@@ -9,6 +9,8 @@ object LoginError:
   enum Key:
     case LoginName
     case Password
+    case Invite
+    case Default
 
 type Errors = ValidationErrors[LoginError.Key, String]
 type LoginValid[A] = Validated[Errors, A]

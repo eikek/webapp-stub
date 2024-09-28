@@ -5,6 +5,7 @@ import cats.data.Validated
 import cats.effect.*
 import cats.syntax.all.*
 
+import webappstub.common.model.*
 import webappstub.backend.LoginService
 import webappstub.backend.auth.*
 import webappstub.server.routes.login.LoginError.*
@@ -30,7 +31,7 @@ final private class LoginApi[F[_]: Sync](login: LoginService[F])
     .optional
 
   def findRememberMe(req: Request[F]): F[Option[RememberMeToken]] =
-    rememberMeAuth(req).subflatMap(_.token).value
+    rememberMeAuth(req).subflatMap(_.getToken).value
 
   def doLogin(in: Model.UserPasswordForm): F[LoginValid[LoginResult]] =
     in.toModel match

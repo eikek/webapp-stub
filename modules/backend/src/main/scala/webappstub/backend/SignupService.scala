@@ -54,6 +54,9 @@ object SignupService:
       repo: AccountRepo[F],
       req: SignupRequest
   ): F[SignupResult] =
+    val account = req.externalId
+      .map(NewAccount.externalActive(req.login, _, req.refreshToken))
+      .getOrElse(NewAccount.internalActive(req.login, PasswordCrypt.crypt(req.password)))
     repo
-      .insert(NewAccount.internalActive(req.login, PasswordCrypt.crypt(req.password)))
+      .insert(account)
       .map(_.fold(SignupResult.LoginExists)(SignupResult.Success(_)))

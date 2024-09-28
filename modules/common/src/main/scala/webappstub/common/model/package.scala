@@ -10,22 +10,25 @@ package object model {
   extension (self: AuthToken)
     def provider: Option[Provider] =
       self.claims.issuer match
-        case Some(v) if v.value == Provider.internal.value => Some(Provider.internal)
-        case Some(v) => Some(Provider(v.value))
-        case None => None
+        case Some(Provider.internal) => Some(Provider.internal)
+        case Some(v)                 => Some(Provider(v.value))
+        case None                    => None
 
-    def accountId: Option[Either[AccountId, ExternalAccountId]] =
+    def accountKey: Option[AccountKey] =
       provider match
         case Some(Provider.internal) =>
-          self.claims.subject.flatMap(_.value.toLongOption).map(n => Left(AccountId(n)))
+          self.claims.subject
+            .flatMap(_.value.toLongOption)
+            .map(n => AccountKey.Internal(AccountId(n)))
         case Some(p) =>
-          ExternalAccountId.fromToken(self).map(Right(_))
+          ExternalAccountId.fromToken(self).map(AccountKey.External(_))
         case None => None
 
     def rememberMeKey: Option[RememberMeKey] =
       provider match
         case Some(Provider.internal) =>
-          self.claims.subject.map(_.value).flatMap(s => RememberMeKey.fromString(s).toOption)
+          self.claims.subject
+            .map(_.value)
+            .flatMap(s => RememberMeKey.fromString(s).toOption)
         case _ => None
-
 }

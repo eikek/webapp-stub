@@ -18,7 +18,8 @@ import ciris.*
 import com.comcast.ip4s.{Host, Port}
 import org.http4s.Uri
 import scribe.Level
-import soidc.jwt.JWK
+import soidc.jwt.{JWK, Uri as JwtUri}
+import soidc.core.model.*
 
 object ConfigValues extends ConfigDecoders:
   private val envPrefix = "WEBAPPSTUB"
@@ -82,10 +83,26 @@ object ConfigValues extends ConfigDecoders:
   val baseUri = config("BASE_URI", "").as[Uri]
 
   val auth = {
+    val intEnabled = config("AUTH_INTERNAL_ENABLED", "true").as[Boolean]
     val secret = config("SERVER_SECRET").as[JWK].option
-    val valid = config("SESSION_VALID", "10 minutes").as[FiniteDuration]
-    val rememberValid = config("REMEMBER_ME_VALID", "30 days").as[FiniteDuration]
-    ??? // (secret, valid, authType, rememberValid).mapN(AuthConfig.apply)
+    val valid = config("AUTH_INTERNAL_SESSION_VALID", "10 minutes").as[FiniteDuration]
+    val rememberValid =
+      config("AUTH_INTERNAL_REMEMBER_ME_VALID", "30 days").as[FiniteDuration]
+    val internal =
+      (intEnabled, secret, valid, rememberValid).mapN(AuthConfig.Internal.apply)
+    val openIdProvider = config("AUTH_OPENID_PROVIDERS", "").as[List[String]]
+    val openId = openIdProvider.listflatMap(openIdConfig)
+    (internal, openId).mapN((a, b) => AuthConfig(a, b.toMap))
+  }
+
+  private def openIdConfig(name: String) = {
+    val n = name.toUpperCase()
+    val providerUri = config(s"OPENID_${n}_PROVIDER_URI").as[JwtUri]
+    val clientId = config(s"OPENID_${n}_CLIENT_ID").as[ClientId]
+    val clientSecret = config(s"OPENID_${n}_CLIENT_SECRET").as[ClientSecret]
+    val scopes = config(s"OPENID_${n}_SCOPE").as[ScopeList].option
+    (providerUri, clientId, clientSecret, scopes)
+      .mapN((a, b, c, d) => name -> AuthConfig.OpenId(a, b, c, d))
   }
 
   val signup = {

@@ -11,6 +11,7 @@ import htmx4s.http4s.util.ValidationDsl.*
 import org.http4s.FormDataDecoder
 import org.http4s.FormDataDecoder.*
 import org.http4s.QueryParamDecoder
+import soidc.jwt.JWS
 
 object Model extends ParamDecoders:
   final case class UserPasswordForm(user: String, password: String, rememberMe: Boolean):
@@ -27,3 +28,22 @@ object Model extends ParamDecoders:
         fieldOptional[Boolean]("rememberMe").map(_.getOrElse(false))
       )
         .mapN(UserPasswordForm.apply)
+
+  final case class SignupForm(
+      user: String = "",
+      inviteKey: Option[String] = None
+  ):
+    def toModel(id: ExternalAccountId): LoginValid[SignupRequest] = {
+      val login = LoginName.fromString(user).toValidatedNel.keyed(Key.LoginName)
+      val ik = inviteKey match
+        case None => None.valid[Key, String]
+        case Some(k) =>
+          InviteKey.fromString(k).toValidatedNel.keyed(Key.Invite).map(_.some)
+
+      (login, Some(id).valid, Option.empty[JWS].valid, ik).mapN(SignupRequest.external)
+    }
+
+  object SignupForm:
+    given FormDataDecoder[SignupForm] =
+      (field[String]("username"), fieldOptional[String]("inviteKey"))
+        .mapN(SignupForm.apply)

@@ -19,6 +19,7 @@ object View extends Components:
       cfg: UiConfig,
       ctx: Settings,
       mode: SignupMode,
+      form: Model.SignupForm,
       errors: Option[Errors]
   ): TypedTag[String] =
     div(
@@ -31,7 +32,7 @@ object View extends Components:
           cls := "self-center",
           h2(cls := "text-2xl font-bold mx-auto", s"Signup - ${cfg.name}")
         ),
-        signupForm(Model.SignupForm(), ctx, mode, errors)
+        signupForm(form, ctx, mode, errors)
       ),
       div(
         cls := "mt-4 flex flex-row items-center space-x-4 py-2",

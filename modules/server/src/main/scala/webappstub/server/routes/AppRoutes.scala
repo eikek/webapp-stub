@@ -1,10 +1,12 @@
 package webappstub.server.routes
 
 import cats.effect.*
+import cats.syntax.all.*
 
 import webappstub.backend.Backend
 import webappstub.server.Config
 import webappstub.server.common.Responses
+import webappstub.server.context.AccountMiddleware
 import webappstub.server.routes.contacts.ContactRoutes
 import webappstub.server.routes.invite.InviteRoutes
 import webappstub.server.routes.login.LoginRoutes
@@ -22,6 +24,7 @@ import soidc.http4s.routes.GetToken
 import soidc.http4s.routes.JwtAuthMiddleware
 import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
+import webappstub.backend.auth.TokenValidator
 
 final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     extends Htmx4sDsl[F]:
@@ -37,27 +40,45 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     makeWebjar("fi", Webjars.flagicons)
   )
 
-  val withAuth = JwtAuthMiddleware
+  val validator =
+    backend.login
+      .openIdRealms(uri"")
+      .map(_.values.toSeq.map(_.validator))
+      .map(vs => backend.login.internalRealm.validator +: vs)
+      .map(_.combineAll)
+
+  def withJwtAuth(validator: TokenValidator[F]) = JwtAuthMiddleware
     .builder[F, JoseHeader, SimpleClaims]
     .withGeToken(GetToken.anyOf(GetToken.bearer, GetToken.cookie("webappstub_auth")))
-    .withValidator(backend.login.internalRealm.validator)
+    .withValidator(validator)
     .withRefresh(
       backend.login.internalRealm.jwtRefresh,
       _.updateCookie("webappstub_auth", uri"")
     )
 
+  val withAccount = AccountMiddleware
+    .builder[F]
+    .withLookup(backend.accountRepo.findByKey)
+
   val uiConfig = UiConfig.fromConfig(config)
-  val login = LoginRoutes[F](backend.login, config, uiConfig)
+  val login = LoginRoutes[F](backend.login, backend.signup, config, uiConfig)
   val signup = SignupRoutes[F](backend.signup, config, uiConfig)
   val invite = InviteRoutes[F](backend.signup)
   val contacts = ContactRoutes.create[F](backend)
   val settings = SettingRoutes[F](config)
 
-  def routes: HttpRoutes[F] = Router.define(
-    "/assets" -> WebjarRoute[F](webjars).serve,
-    "/login" -> withAuth.optional(login.routes),
-    "/signup" -> withAuth.optional(signup.routes),
-    "/create-invite" -> withAuth.securedOrRedirect(uri"/app/login")(invite.routes),
-    "/settings" -> withAuth.optional(settings.routes),
-    "/contacts" -> withAuth.securedOrRedirect(uri"/app/login")(contacts.routes)
-  )(Responses.notFoundHtmlRoute)
+  def routes: F[HttpRoutes[F]] = validator.map { v =>
+    val withJwt = withJwtAuth(v)
+    Router.define(
+      "/assets" -> WebjarRoute[F](webjars).serve,
+      "/login" -> withJwt.optional(login.routes),
+      "/signup" -> withJwt.optional(signup.routes),
+      "/create-invite" -> withJwt.securedOrRedirect(uri"/app/login")(
+        withAccount.required(invite.routes)
+      ),
+      "/settings" -> withJwt.optional(settings.routes),
+      "/contacts" -> withJwt.securedOrRedirect(uri"/app/login")(
+        withAccount.required(contacts.routes)
+      )
+    )(Responses.notFoundHtmlRoute)
+  }

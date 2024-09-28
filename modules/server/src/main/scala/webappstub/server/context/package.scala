@@ -1,16 +1,18 @@
 package webappstub.server
 
-import webappstub.backend.auth.*
-import webappstub.common.model.*
-
-import soidc.http4s.routes.JwtContext
+import org.http4s.*
+import soidc.http4s.routes.*
 import soidc.jwt.*
+import cats.data.{Kleisli, OptionT}
 
 package object context {
   type Authenticated = JwtContext.Authenticated[JoseHeader, SimpleClaims]
-  type MaybeAuthenticated = JwtContext.MaybeAuthenticated[JoseHeader, SimpleClaims]
-  type Context = JwtContext[JoseHeader, SimpleClaims]
+  type MaybeAuthenticated = JwtContext[JoseHeader, SimpleClaims]
+  type JwtRoutes[F[_]] = JwtAuthRoutes[F, JoseHeader, SimpleClaims]
+  type MaybeJwtRoutes[F[_]] = JwtMaybeAuthRoutes[F, JoseHeader, SimpleClaims]
 
-  extension (self: Authenticated)
-    def account: Option[Either[AccountId, ExternalAccountId]] = self.token.accountId
+  type AccountRoutes[F[_]] =
+    Kleisli[OptionT[F, *], ContextRequest[F, Context.Account], Response[F]]
+  type MaybeAccountRoutes[F[_]] =
+    Kleisli[OptionT[F, *], ContextRequest[F, Context], Response[F]]
 }

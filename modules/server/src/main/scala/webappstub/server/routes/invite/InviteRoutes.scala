@@ -15,7 +15,7 @@ import org.http4s.scalatags.*
 
 final class InviteRoutes[F[_]: Async](signup: SignupService[F]) extends Htmx4sDsl[F]:
 
-  def routes = AuthedRoutes.of[Authenticated, F] {
+  def routes = AuthedRoutes.of[Context.Account, F] {
     case ContextRequest(ctx, req @ GET -> Root) =>
       val settings = Settings.fromRequest(req)
       Ok(

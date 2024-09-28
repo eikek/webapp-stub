@@ -52,3 +52,5 @@ object Styles:
   val link = "text-blue-500 hover:text-blue-600 cursor-pointer"
 
   val btn = primaryButtonPlain
+
+  val basicBtn = s"$basicBtnBg $basicBtnHover"
