@@ -3,9 +3,10 @@ package webappstub.server.routes.login
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.common.model.*
-import webappstub.backend.{LoginService, SignupService}
 import webappstub.backend.auth.*
+import webappstub.backend.signup.SignupResult
+import webappstub.backend.{LoginService, SignupService}
+import webappstub.common.model.*
 import webappstub.server.Config
 import webappstub.server.common.*
 import webappstub.server.context.*
@@ -18,15 +19,14 @@ import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
+import soidc.borer.given
+import soidc.core.OidParameterNames
 import soidc.http4s.client.ByteEntityDecoder
 import soidc.http4s.routes.AuthCodeFlow
 import soidc.http4s.routes.AuthCodeFlow.Result.Success
 import soidc.http4s.routes.JwtCookie
 import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
-import soidc.borer.given
-import soidc.core.OidParameterNames
-import webappstub.backend.signup.SignupResult
 
 final class LoginRoutes[F[_]: Async](
     login: LoginService[F],

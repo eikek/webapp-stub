@@ -4,6 +4,7 @@ import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.backend.Backend
+import webappstub.backend.auth.WebappstubRealm
 import webappstub.server.Config
 import webappstub.server.common.Responses
 import webappstub.server.context.AccountMiddleware
@@ -24,7 +25,6 @@ import soidc.http4s.routes.GetToken
 import soidc.http4s.routes.JwtAuthMiddleware
 import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
-import webappstub.backend.auth.TokenValidator
 
 final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     extends Htmx4sDsl[F]:
@@ -40,19 +40,19 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     makeWebjar("fi", Webjars.flagicons)
   )
 
-  val validator =
+  val makeRealm =
     backend.login
       .openIdRealms(uri"")
-      .map(_.values.toSeq.map(_.validator))
-      .map(vs => backend.login.internalRealm.validator +: vs)
+      .map(_.values.toSeq)
+      .map(vs => backend.login.internalRealm +: vs)
       .map(_.combineAll)
 
-  def withJwtAuth(validator: TokenValidator[F]) = JwtAuthMiddleware
+  def withJwtAuth(realm: WebappstubRealm[F]) = JwtAuthMiddleware
     .builder[F, JoseHeader, SimpleClaims]
     .withGeToken(GetToken.anyOf(GetToken.bearer, GetToken.cookie("webappstub_auth")))
-    .withValidator(validator)
+    .withValidator(realm.validator)
     .withRefresh(
-      backend.login.internalRealm.jwtRefresh,
+      realm.jwtRefresh,
       _.updateCookie("webappstub_auth", uri"")
     )
 
@@ -67,8 +67,8 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   val contacts = ContactRoutes.create[F](backend)
   val settings = SettingRoutes[F](config)
 
-  def routes: F[HttpRoutes[F]] = validator.map { v =>
-    val withJwt = withJwtAuth(v)
+  def routes: F[HttpRoutes[F]] = makeRealm.map { realm =>
+    val withJwt = withJwtAuth(realm)
     Router.define(
       "/assets" -> WebjarRoute[F](webjars).serve,
       "/login" -> withJwt.optional(login.routes),

@@ -18,8 +18,8 @@ import ciris.*
 import com.comcast.ip4s.{Host, Port}
 import org.http4s.Uri
 import scribe.Level
-import soidc.jwt.{JWK, Uri as JwtUri}
 import soidc.core.model.*
+import soidc.jwt.{JWK, Uri as JwtUri}
 
 object ConfigValues extends ConfigDecoders:
   private val envPrefix = "WEBAPPSTUB"

@@ -1,13 +1,15 @@
 package webappstub.server.context
 
-import cats.syntax.all.*
-import webappstub.common.model.*
-import cats.data.Kleisli
-import org.http4s.Response
-import AccountMiddleware.Config
-import org.http4s.ContextRequest
 import cats.Monad
+import cats.data.Kleisli
 import cats.data.OptionT
+import cats.syntax.all.*
+
+import webappstub.common.model.*
+import webappstub.server.context.AccountMiddleware.Config
+
+import org.http4s.ContextRequest
+import org.http4s.Response
 import soidc.http4s.routes.JwtContext
 
 final class AccountMiddleware[F[_]: Monad](cfg: Config[F]):

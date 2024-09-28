@@ -5,9 +5,9 @@ import cats.data.Validated
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.common.model.*
 import webappstub.backend.LoginService
 import webappstub.backend.auth.*
+import webappstub.common.model.*
 import webappstub.server.routes.login.LoginError.*
 
 import org.http4s.Request

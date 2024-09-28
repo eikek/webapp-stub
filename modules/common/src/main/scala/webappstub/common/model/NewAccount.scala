@@ -18,5 +18,9 @@ object NewAccount:
   def internalActive(login: LoginName, pass: Password): NewAccount =
     NewAccount(AccountState.Active, login, pass, None, None)
 
-  def externalActive(login: LoginName, externalId: ExternalAccountId, refreshToken: Option[JWS]): NewAccount =
+  def externalActive(
+      login: LoginName,
+      externalId: ExternalAccountId,
+      refreshToken: Option[JWS]
+  ): NewAccount =
     NewAccount(AccountState.Active, login, Password(""), Some(externalId), refreshToken)

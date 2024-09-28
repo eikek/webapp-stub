@@ -88,7 +88,7 @@ object LoginService:
           case Some(id) =>
             repo.findByExternalId(id).map {
               case Some(_) => LoginResult.Success(token, None)
-              case None => LoginResult.AccountMissing
+              case None    => LoginResult.AccountMissing
             }
 
       def loginInternal(up: UserPass): F[LoginResult] =

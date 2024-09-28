@@ -17,8 +17,8 @@ import com.comcast.ip4s.*
 import org.http4s.Uri
 import scodec.bits.ByteVector
 import scribe.Level
-import soidc.jwt.{Uri as JwtUri, *}
 import soidc.core.model.*
+import soidc.jwt.{Uri as JwtUri, *}
 
 private trait ConfigDecoders:
   extension [A, B](self: ConfigDecoder[A, B])

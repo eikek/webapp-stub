@@ -4,9 +4,9 @@ import webappstub.server.context.*
 import webappstub.server.data.UiTheme
 
 import htmx4s.scalatags.Bundle.*
+import org.http4s.Uri
 import scalatags.Text.TypedTag
 import scalatags.Text.all.doctype
-import org.http4s.Uri
 
 object Layout:
   def styleMain(withTopBar: Boolean) = {

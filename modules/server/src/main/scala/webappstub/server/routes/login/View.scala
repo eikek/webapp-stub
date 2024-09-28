@@ -1,17 +1,17 @@
 package webappstub.server.routes.login
 
 import cats.syntax.all.*
+
+import webappstub.backend.signup.SignupMode
+import webappstub.backend.signup.SignupResult
 import webappstub.server.context.Settings
+import webappstub.server.routes.login.LoginError.Key
 import webappstub.server.routes.settings.Views.{languageDropdown, themeButton}
-import webappstub.server.routes.{Components, Styles, UiConfig}
 import webappstub.server.routes.signup.I18n as SignupI18n
+import webappstub.server.routes.{Components, Styles, UiConfig}
 
 import htmx4s.scalatags.Bundle.*
 import scalatags.Text.TypedTag
-import webappstub.backend.signup.SignupMode
-import webappstub.server.routes.login.LoginError.Key
-import webappstub.backend.signup.SignupResult
-import org.http4s.Uri
 
 object View extends Components:
   object Id:

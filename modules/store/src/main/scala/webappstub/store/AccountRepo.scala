@@ -5,6 +5,7 @@ import java.time.Instant
 import scala.concurrent.duration.Duration
 
 import webappstub.common.model.*
+
 import soidc.jwt.JWS
 
 trait AccountRepo[F[_]]:

@@ -1,9 +1,10 @@
 package webappstub.server
 
+import cats.data.{Kleisli, OptionT}
+
 import org.http4s.*
 import soidc.http4s.routes.*
 import soidc.jwt.*
-import cats.data.{Kleisli, OptionT}
 
 package object context {
   type Authenticated = JwtContext.Authenticated[JoseHeader, SimpleClaims]

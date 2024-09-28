@@ -1,6 +1,7 @@
 package webappstub.server.context
 
 import webappstub.common.model.*
+
 import soidc.jwt.SimpleClaims
 
 trait Context:
@@ -10,7 +11,6 @@ trait Context:
 object Context:
   val none: Context = NoAccount
   def apply(id: AccountId, claims: SimpleClaims): Context = Account(id, claims)
-
 
   final case class Account(
       id: AccountId,
