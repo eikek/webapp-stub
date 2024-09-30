@@ -12,17 +12,17 @@ val sharedSettings = Seq(
   organization := "com.github.eikek",
   scalaVersion := Dependencies.V.scala3,
   scalacOptions ++= Seq(
+    "-feature",
     "-deprecation",
+    "-unchecked",
     "-encoding",
     "UTF-8",
     "-language:higherKinds",
-    "-feature",
+    "-Xkind-projector:underscores",
     "-Werror", // fail when there are warnings
-    "-unchecked",
-    "-Wunused:imports",
-    "-Wunused:locals",
-    "-Wunused:explicits",
-    "-Wvalue-discard"
+    "-Wunused:all",
+    "-indent",
+    "-print-lines"
   ),
   Compile / console / scalacOptions := Seq(),
   Test / console / scalacOptions := Seq()

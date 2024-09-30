@@ -37,7 +37,6 @@ final class LoginRoutes[F[_]: Async](
     with ByteEntityDecoder:
   private val logger = scribe.cats.effect[F]
   private val api = LoginApi[F](login)
-  private val cookieName = "webappstub_auth"
   private val rememberMeCookie = api.rememberMeCookie
 
   object Username extends OptionalQueryParamDecoderMatcher[String]("preferredName") {
@@ -103,8 +102,6 @@ final class LoginRoutes[F[_]: Async](
           flow.run(req) {
             case Left(err) => Forbidden(View.loginFailed(err.toString()))
             case Right(AuthCodeFlow.Result.Success(token, idResp)) =>
-              // check if account exists, if not redirect to signup
-              // if yes, redirect to contact page
               val username = idResp.idToken
                 .flatMap(_.decode[JoseHeader, SimpleClaims].toOption)
                 .flatMap(
@@ -144,7 +141,7 @@ final class LoginRoutes[F[_]: Async](
               case LoginResult.Success(token, _) =>
                 val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
                 val cookie = JwtCookie
-                  .create(cookieName, token.jws, baseUrl)
+                  .create(AuthCookieName.value.asString, token.jws, baseUrl)
                   .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
                 Found(Location(uri"/app/contacts")).map(_.addCookie(cookie))
               case _ =>
@@ -174,7 +171,10 @@ final class LoginRoutes[F[_]: Async](
       NoContent()
         .map(
           _.addCookie(
-            JwtCookie.remove(cookieName, ClientRequestInfo.getBaseUrl(config, req))
+            JwtCookie.remove(
+              AuthCookieName.value.asString,
+              ClientRequestInfo.getBaseUrl(config, req)
+            )
           )
             .addCookie(
               JwtCookie
@@ -192,7 +192,7 @@ final class LoginRoutes[F[_]: Async](
   ) =
     val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
     val cookie = JwtCookie
-      .create(cookieName, token.jws, baseUrl)
+      .create(AuthCookieName.value.asString, token.jws, baseUrl)
       .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
     val rmeCookie = rme
       .map(t =>

@@ -10,7 +10,7 @@ import webappstub.server.common.Responses
 import webappstub.server.context.AccountMiddleware
 import webappstub.server.routes.contacts.ContactRoutes
 import webappstub.server.routes.invite.InviteRoutes
-import webappstub.server.routes.login.LoginRoutes
+import webappstub.server.routes.login.{AuthCookieName, LoginRoutes}
 import webappstub.server.routes.settings.SettingRoutes
 import webappstub.server.routes.signup.SignupRoutes
 
@@ -53,7 +53,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     .withValidator(realm.validator)
     .withRefresh(
       realm.jwtRefresh,
-      _.updateCookie("webappstub_auth", uri"")
+      _.updateCookie(AuthCookieName.value.asString, uri"")
     )
 
   val withAccount = AccountMiddleware
