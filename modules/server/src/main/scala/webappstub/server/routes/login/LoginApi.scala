@@ -28,7 +28,7 @@ final private class LoginApi[F[_]: Sync](login: LoginService[F])
     .builder[F, JoseHeader, SimpleClaims]
     .withGetToken(GetToken.cookie(rememberMeCookie))
     .withValidator(login.rememberMeValidator)
-    .optional
+    .securedOrAnonymous
 
   def findRememberMe(req: Request[F]): F[Option[RememberMeToken]] =
     rememberMeAuth(req).subflatMap(_.getToken).value

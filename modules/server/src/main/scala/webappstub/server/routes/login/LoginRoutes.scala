@@ -39,6 +39,23 @@ final class LoginRoutes[F[_]: Async](
   private val api = LoginApi[F](login)
   private val rememberMeCookie = api.rememberMeCookie
 
+  def renderLoginPage(req: Request[F]): F[Response[F]] =
+    val settings = Settings.fromRequest(req)
+    Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
+
+  def removeCookies(req: Request[F])(resp: Response[F]) =
+    resp
+      .addCookie(
+        JwtCookie.remove(
+          AuthCookieName.value.asString,
+          ClientRequestInfo.getBaseUrl(config, req)
+        )
+      )
+      .addCookie(
+        JwtCookie
+          .remove(rememberMeCookie, ClientRequestInfo.getBaseUrl(config, req))
+      )
+
   object Username extends OptionalQueryParamDecoderMatcher[String]("preferredName") {
     val key = "preferredName"
   }
@@ -131,11 +148,10 @@ final class LoginRoutes[F[_]: Async](
         .getOrElseF(NotFound())
 
     case ContextRequest(ctx, req @ GET -> Root) =>
-      val settings = Settings.fromRequest(req)
       if (ctx.isAuthenticated) Found(Location(uri"/app/contacts"))
       else
         api.findRememberMe(req).flatMap {
-          case None => Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
+          case None => renderLoginPage(req)
           case Some(rkey) =>
             api.doRememberMeLogin(rkey).flatMap {
               case LoginResult.Success(token, _) =>
@@ -145,7 +161,7 @@ final class LoginRoutes[F[_]: Async](
                   .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
                 Found(Location(uri"/app/contacts")).map(_.addCookie(cookie))
               case _ =>
-                Ok(Layout("Login", settings.theme)(View.view(uiCfg, settings)))
+                renderLoginPage(req)
             }
         }
 
@@ -169,19 +185,8 @@ final class LoginRoutes[F[_]: Async](
 
     case ContextRequest(ctx, req @ DELETE -> Root) =>
       NoContent()
-        .map(
-          _.addCookie(
-            JwtCookie.remove(
-              AuthCookieName.value.asString,
-              ClientRequestInfo.getBaseUrl(config, req)
-            )
-          )
-            .addCookie(
-              JwtCookie
-                .remove(rememberMeCookie, ClientRequestInfo.getBaseUrl(config, req))
-            )
-            .putHeaders(HxRedirect(uri"/app/login"))
-        )
+        .map(removeCookies(req))
+        .map(_.putHeaders(HxRedirect(uri"/app/login")))
   }
 
   def attachCookies(
