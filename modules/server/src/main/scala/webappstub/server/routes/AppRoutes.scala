@@ -18,6 +18,9 @@ import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.WebjarRoute
 import htmx4s.http4s.WebjarRoute.Webjar
 import org.http4s.HttpRoutes
+import org.http4s.Request
+import org.http4s.Response
+import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.server.Router
 import soidc.borer.given
@@ -25,9 +28,6 @@ import soidc.http4s.routes.GetToken
 import soidc.http4s.routes.JwtAuthMiddleware
 import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
-import org.http4s.Response
-import org.http4s.Request
-import org.http4s.headers.Location
 
 final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     extends Htmx4sDsl[F]:
