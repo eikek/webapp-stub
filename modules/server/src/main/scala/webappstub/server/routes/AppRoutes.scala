@@ -10,18 +10,13 @@ import webappstub.server.common.Responses
 import webappstub.server.context.AccountMiddleware
 import webappstub.server.routes.contacts.ContactRoutes
 import webappstub.server.routes.invite.InviteRoutes
-import webappstub.server.routes.login.{AuthCookie, Cookies, LoginRoutes}
+import webappstub.server.routes.login.{AuthCookie, LoginRoutes}
 import webappstub.server.routes.settings.SettingRoutes
 import webappstub.server.routes.signup.SignupRoutes
 
 import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.WebjarRoute
-import htmx4s.http4s.WebjarRoute.Webjar
-import org.http4s.HttpRoutes
-import org.http4s.Request
-import org.http4s.Response
-import org.http4s.headers.Location
-import org.http4s.implicits.*
+import org.http4s.*
 import org.http4s.server.Router
 import soidc.borer.given
 import soidc.http4s.routes.GetToken
@@ -32,17 +27,6 @@ import soidc.jwt.SimpleClaims
 final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     extends Htmx4sDsl[F]:
   private val logger = scribe.cats.effect[F]
-  private def makeWebjar(uri: String, a: Webjars.Artifact, path: String = "") =
-    Webjar(uri)(a.name, a.version, path)
-
-  private val webjars = Seq(
-    // refers to our own js and css stuff, version is not needed
-    Webjar("self")("webappstub-server", "", ""),
-    makeWebjar("htmx", Webjars.htmxorg, "dist"),
-    makeWebjar("htmx-rt", Webjars.htmxextresponsetargets),
-    makeWebjar("fa", Webjars.fortawesome__fontawesomefree),
-    makeWebjar("fi", Webjars.flagicons)
-  )
 
   val makeRealm =
     backend.login
@@ -58,12 +42,6 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   val contacts = ContactRoutes.create[F](backend)
   val settings = SettingRoutes[F](config)
 
-  val redirectToLogin: Request[F] => F[Response[F]] = { req =>
-    val target = uri"/app/login"
-    (if (req.uri.path == target.path) login.renderLoginPage(req)
-     else SeeOther(Location(target))).map(Cookies.removeAuth(config, req))
-  }
-
   def withJwtAuth(realm: WebappstubRealm[F]) = JwtAuthMiddleware
     .builder[F, JoseHeader, SimpleClaims]
     .withGeToken(GetToken.anyOf(GetToken.bearer, GetToken.cookie("webappstub_auth")))
@@ -73,7 +51,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
       realm.jwtRefresh,
       _.updateCookie(AuthCookie.value.asString, config.baseUrl)
     )
-    .withOnFailure(redirectToLogin)
+    .withOnFailure(login.redirectToLogin)
 
   val withAccount = AccountMiddleware
     .builder[F]
@@ -82,7 +60,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   def routes: F[HttpRoutes[F]] = makeRealm.map { realm =>
     val withJwt = withJwtAuth(realm)
     Router.define(
-      "/assets" -> WebjarRoute[F](webjars).serve,
+      "/assets" -> WebjarRoute[F](WebjarDef.webjars).serve,
       "/login" -> withJwt.securedOrAnonymous(login.routes),
       "/signup" -> withJwt.securedOrAnonymous(signup.routes),
       "/create-invite" -> withJwt.secured(withAccount.required(invite.routes)),
