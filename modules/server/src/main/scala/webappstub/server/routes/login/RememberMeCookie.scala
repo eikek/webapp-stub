@@ -2,8 +2,7 @@ package webappstub.server.routes.login
 
 import webappstub.common.model.RememberMeToken
 
-import org.http4s.ResponseCookie
-import org.http4s.Uri
+import org.http4s.{ResponseCookie, Uri, HttpDate}
 import soidc.http4s.routes.GetToken
 import soidc.http4s.routes.JwtCookie
 
@@ -19,4 +18,8 @@ object RememberMeCookie:
   def set[F[_]](token: RememberMeToken, uri: Uri): ResponseCookie =
     JwtCookie
       .create(value, token.jws, uri)
-      .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
+      .copy(expires =
+        token.claims.expirationTime.map(exp =>
+          HttpDate.unsafeFromEpochSecond(exp.toSeconds)
+        )
+      )

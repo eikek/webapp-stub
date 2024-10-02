@@ -12,6 +12,7 @@ import htmx4s.http4s.headers.HxRedirect
 import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
+import htmx4s.http4s.headers.HxRequest
 
 final class LoginRoutes[F[_]: Async](
     login: LoginService[F],
@@ -30,7 +31,10 @@ final class LoginRoutes[F[_]: Async](
       internalRoutes.renderLoginPage(req).map(Cookies.removeAuth(config, req))
     case req =>
       val target = uri"/app/login"
-      SeeOther(Location(target))
+      val resp =
+        if (req.headers.get[HxRequest].exists(_.flag)) NoContent()
+        else SeeOther(Location(target))
+      resp
         .map(Cookies.removeAuth(config, req))
         .map(_.putHeaders(HxRedirect(target)))
   }

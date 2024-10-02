@@ -15,6 +15,10 @@ object AuthCookie:
   def set[F[_]](token: AuthToken, uri: Uri): ResponseCookie =
     JwtCookie
       .create(value, token.jws, uri)
-      .copy(maxAge = token.claims.expirationTime.map(_.toSeconds))
+      .copy(expires =
+        token.claims.expirationTime.map(exp =>
+          HttpDate.unsafeFromEpochSecond(exp.toSeconds)
+        )
+      )
 
   extension (self: AuthCookie) def asString: String = value
