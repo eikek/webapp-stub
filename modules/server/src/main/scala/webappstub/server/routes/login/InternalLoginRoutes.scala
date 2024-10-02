@@ -4,8 +4,8 @@ import cats.data.Validated
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.backend.LoginService
 import webappstub.backend.auth.*
+import webappstub.backend.{ConfiguredRealms, LoginService}
 import webappstub.common.model.*
 import webappstub.server.Config
 import webappstub.server.common.*
@@ -26,6 +26,7 @@ import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
 
 final class InternalLoginRoutes[F[_]: Async](
+    realms: ConfiguredRealms[F],
     login: LoginService[F],
     config: Config,
     uiCfg: UiConfig
@@ -35,7 +36,7 @@ final class InternalLoginRoutes[F[_]: Async](
   private val rememberMeAuth = JwtAuth
     .builder[F, JoseHeader, SimpleClaims]
     .withGetToken(RememberMeCookie.getToken)
-    .withValidator(login.rememberMeValidator)
+    .withValidator(realms.rememberMeRealm.validator)
     .securedOrAnonymous
 
   def findRememberMe(req: Request[F]): F[Option[RememberMeToken]] =

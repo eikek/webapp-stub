@@ -1,7 +1,6 @@
 package webappstub.server.routes
 
 import cats.effect.*
-import cats.syntax.all.*
 
 import webappstub.backend.Backend
 import webappstub.backend.auth.WebappstubRealm
@@ -28,15 +27,8 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     extends Htmx4sDsl[F]:
   private val logger = scribe.cats.effect[F]
 
-  val makeRealm =
-    backend.login
-      .openIdRealms(config.baseUrl)
-      .map(_.values.toSeq)
-      .map(vs => backend.login.internalRealm +: vs)
-      .map(_.combineAll)
-
   val uiConfig = UiConfig.fromConfig(config)
-  val login = LoginRoutes[F](backend.login, backend.signup, config, uiConfig)
+  val login = LoginRoutes[F](backend, config, uiConfig)
   val signup = SignupRoutes[F](backend.signup, config, uiConfig)
   val invite = InviteRoutes[F](backend.signup)
   val contacts = ContactRoutes.create[F](backend)
@@ -57,7 +49,8 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     .builder[F]
     .withLookup(backend.accountRepo.findByKey)
 
-  def routes: F[HttpRoutes[F]] = makeRealm.map { realm =>
+  def routes: F[HttpRoutes[F]] = Async[F].pure {
+    val realm = backend.realms
     val withJwt = withJwtAuth(realm)
     Router.define(
       "/assets" -> WebjarRoute[F](WebjarDef.webjars).serve,

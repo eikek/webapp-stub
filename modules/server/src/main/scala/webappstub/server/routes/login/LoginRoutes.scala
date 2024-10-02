@@ -3,26 +3,26 @@ package webappstub.server.routes.login
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.backend.{LoginService, SignupService}
+import webappstub.backend.Backend
 import webappstub.server.Config
 import webappstub.server.routes.UiConfig
 
 import htmx4s.http4s.Htmx4sDsl
 import htmx4s.http4s.headers.HxRedirect
+import htmx4s.http4s.headers.HxRequest
 import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
-import htmx4s.http4s.headers.HxRequest
 
 final class LoginRoutes[F[_]: Async](
-    login: LoginService[F],
-    signup: SignupService[F],
+    backend: Backend[F],
     config: Config,
     uiCfg: UiConfig
 ) extends Htmx4sDsl[F]:
 
-  private val internalRoutes = InternalLoginRoutes[F](login, config, uiCfg)
-  private val openidRoutes = OpenIdLoginRoutes[F](login, signup, config, uiCfg)
+  private val internalRoutes =
+    InternalLoginRoutes[F](backend.realms, backend.login, config, uiCfg)
+  private val openidRoutes = OpenIdLoginRoutes[F](backend, config, uiCfg)
 
   val routes = internalRoutes.routes <+> openidRoutes.routes
 

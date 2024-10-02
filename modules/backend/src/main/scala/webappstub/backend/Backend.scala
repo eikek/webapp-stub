@@ -15,6 +15,7 @@ trait Backend[F[_]]:
   def config: BackendConfig
   def accountRepo: AccountRepo[F]
   def login: LoginService[F]
+  def realms: ConfiguredRealms[F]
   def signup: SignupService[F]
   def contacts: ContactService[F]
 
@@ -26,14 +27,16 @@ object Backend:
     for
       session <- SkunkSession[F](cfg.database)
       _ <- Resource.eval(session.use(s => SchemaMigration(s).migrate))
+      client <- EmberClientBuilder.default[F].build
       contactRepo = new PostgresContactRepo[F](session)
       _accountRepo = new PostgresAccountRepo[F](session)
+      _realms <- Resource.eval(ConfiguredRealms[F](cfg.auth, _accountRepo, client))
       _contacts <- ContactService[F](contactRepo)
-      client <- EmberClientBuilder.default[F].build
     yield new Backend[F] {
       val config = cfg
       val contacts = _contacts
       val accountRepo = _accountRepo
-      val login = LoginService(cfg.auth, accountRepo, client)
+      val realms = _realms
+      val login = LoginService(cfg.auth, accountRepo, _realms)
       val signup = SignupService(cfg.signup, accountRepo)
     }

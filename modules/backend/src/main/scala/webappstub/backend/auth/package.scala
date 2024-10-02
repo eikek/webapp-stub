@@ -13,7 +13,7 @@ package object auth {
 
   type WebappstubTokenStore[F[_]] = TokenStore[F, JoseHeader, SimpleClaims]
   type WebappstubRealm[F[_]] = Realm[F, JoseHeader, SimpleClaims]
-
+  type InternalRealm[F[_]] = LocalFlow[F, JoseHeader, SimpleClaims]
   type OpenIdRealm[F[_]] = AuthorizationCodeFlow[F, JoseHeader, SimpleClaims]
   type TokenValidator[F[_]] = JwtValidator[F, JoseHeader, SimpleClaims]
 

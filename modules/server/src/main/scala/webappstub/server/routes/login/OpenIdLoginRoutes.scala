@@ -3,9 +3,9 @@ import cats.data.OptionT
 import cats.effect.*
 import cats.syntax.all.*
 
+import webappstub.backend.Backend
 import webappstub.backend.auth.*
 import webappstub.backend.signup.SignupResult
-import webappstub.backend.{LoginService, SignupService}
 import webappstub.common.model.*
 import webappstub.server.Config
 import webappstub.server.common.*
@@ -26,8 +26,7 @@ import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
 
 final class OpenIdLoginRoutes[F[_]: Async](
-    login: LoginService[F],
-    signup: SignupService[F],
+    backend: Backend[F],
     config: Config,
     uiCfg: UiConfig
 ) extends Htmx4sDsl[F]
@@ -39,18 +38,11 @@ final class OpenIdLoginRoutes[F[_]: Async](
   }
 
   private def openIdRealm(
-      baseUri: Uri,
       name: String
   ): OptionT[F, AuthCodeFlow[F, JoseHeader, SimpleClaims]] =
-    val resumeSegment = "resume"
-    OptionT(login.openIdRealms(baseUri, resumeSegment).map(_.get(name)))
-      .semiflatMap(acf =>
-        AuthCodeFlow(
-          AuthCodeFlow.Config(baseUri, resumeSegment),
-          acf,
-          SoidcLogger(logger)
-        )
-      )
+    OptionT
+      .fromOption[F](backend.realms.openIdRealms.get(name))
+      .semiflatMap(AuthCodeFlow(_, SoidcLogger(logger)))
 
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
     case ContextRequest(
@@ -91,7 +83,7 @@ final class OpenIdLoginRoutes[F[_]: Async](
                     View.signupForm(data, settings, config.backend.signup.mode, errs.some)
                   ),
                 sreq =>
-                  signup.signup(sreq).flatMap {
+                  backend.signup.signup(sreq).flatMap {
                     case SignupResult.Success(_) =>
                       NoContent()
                         .map(
@@ -105,9 +97,9 @@ final class OpenIdLoginRoutes[F[_]: Async](
 
     case ContextRequest(context, req @ GET -> ("openid" /: name /: _)) =>
       val baseUrl = ClientRequestInfo.getBaseUrl(config, req) / "app" / "login" / "openid"
-      openIdRealm(baseUrl / name, name)
+      openIdRealm(name)
         .semiflatMap { flow =>
-          flow.run(req) {
+          flow.run(req, baseUrl) {
             case Left(err) => Forbidden(View.loginFailed(err.toString()))
             case Right(AuthCodeFlow.Result.Success(token, idResp)) =>
               val username = idResp.idToken
@@ -121,7 +113,7 @@ final class OpenIdLoginRoutes[F[_]: Async](
                 .orEmpty
 
               // must use client redirects, browser don't send the cookie
-              login.loginExternal(token).flatMap {
+              backend.login.loginExternal(token).flatMap {
                 case LoginResult.AccountMissing =>
                   val uri = uri"/app/login/openid-create-account"
                     .withQueryParam(Username.key, username)

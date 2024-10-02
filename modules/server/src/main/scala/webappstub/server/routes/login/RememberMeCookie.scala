@@ -2,7 +2,7 @@ package webappstub.server.routes.login
 
 import webappstub.common.model.RememberMeToken
 
-import org.http4s.{ResponseCookie, Uri, HttpDate}
+import org.http4s.{HttpDate, ResponseCookie, Uri}
 import soidc.http4s.routes.GetToken
 import soidc.http4s.routes.JwtCookie
 
