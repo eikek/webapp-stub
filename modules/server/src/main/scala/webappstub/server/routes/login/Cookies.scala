@@ -10,10 +10,14 @@ import webappstub.server.common.*
 import org.http4s.*
 
 object Cookies:
-  def remove[F[_]](config: Config)(req: Request[F])(resp: Response[F]) =
+  def removeAuth[F[_]](config: Config, req: Request[F])(resp: Response[F]) =
+    val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
+    resp.addCookie(AuthCookie.remove(baseUrl))
+
+  def removeAll[F[_]](config: Config)(req: Request[F])(resp: Response[F]) =
     val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
     resp
-      .addCookie(AuthCookieName.remove(baseUrl))
+      .addCookie(AuthCookie.remove(baseUrl))
       .addCookie(RememberMeCookie.remove(baseUrl))
 
   def set[F[_]: Functor](
@@ -22,7 +26,7 @@ object Cookies:
       resp: F[Response[F]]
   ) =
     val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
-    val cookie = AuthCookieName.set(token, baseUrl)
+    val cookie = AuthCookie.set(token, baseUrl)
     val rmeCookie = rme
       .map(RememberMeCookie.set(_, baseUrl))
       .getOrElse(RememberMeCookie.remove(baseUrl))

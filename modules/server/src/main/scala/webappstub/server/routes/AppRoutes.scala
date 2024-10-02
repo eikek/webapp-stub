@@ -10,7 +10,7 @@ import webappstub.server.common.Responses
 import webappstub.server.context.AccountMiddleware
 import webappstub.server.routes.contacts.ContactRoutes
 import webappstub.server.routes.invite.InviteRoutes
-import webappstub.server.routes.login.{AuthCookieName, LoginRoutes}
+import webappstub.server.routes.login.{AuthCookie, Cookies, LoginRoutes}
 import webappstub.server.routes.settings.SettingRoutes
 import webappstub.server.routes.signup.SignupRoutes
 
@@ -46,7 +46,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
 
   val makeRealm =
     backend.login
-      .openIdRealms(uri"")
+      .openIdRealms(config.baseUrl)
       .map(_.values.toSeq)
       .map(vs => backend.login.internalRealm +: vs)
       .map(_.combineAll)
@@ -61,7 +61,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   val redirectToLogin: Request[F] => F[Response[F]] = { req =>
     val target = uri"/app/login"
     (if (req.uri.path == target.path) login.renderLoginPage(req)
-     else SeeOther(Location(target))).map(login.removeCookies(req))
+     else SeeOther(Location(target))).map(Cookies.removeAuth(config, req))
   }
 
   def withJwtAuth(realm: WebappstubRealm[F]) = JwtAuthMiddleware
@@ -71,7 +71,7 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     .withValidator(realm.validator)
     .withRefresh(
       realm.jwtRefresh,
-      _.updateCookie(AuthCookieName.value.asString, uri"")
+      _.updateCookie(AuthCookie.value.asString, config.baseUrl)
     )
     .withOnFailure(redirectToLogin)
 

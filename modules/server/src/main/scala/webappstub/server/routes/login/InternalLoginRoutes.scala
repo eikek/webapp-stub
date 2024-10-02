@@ -48,7 +48,7 @@ final class InternalLoginRoutes[F[_]: Async](
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
     case ContextRequest(ctx, req @ DELETE -> Root) =>
       NoContent()
-        .map(Cookies.remove(config)(req))
+        .map(Cookies.removeAll(config)(req))
         .map(_.putHeaders(HxRedirect(uri"/app/login")))
 
     case ContextRequest(ctx, req @ GET -> Root) =>
@@ -60,7 +60,7 @@ final class InternalLoginRoutes[F[_]: Async](
             login.loginRememberMe(rkey).flatMap {
               case LoginResult.Success(token, _) =>
                 val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
-                val cookie = AuthCookieName.set(token, baseUrl)
+                val cookie = AuthCookie.set(token, baseUrl)
                 Found(Location(uri"/app/contacts")).map(_.addCookie(cookie))
               case _ =>
                 renderLoginPage(req)

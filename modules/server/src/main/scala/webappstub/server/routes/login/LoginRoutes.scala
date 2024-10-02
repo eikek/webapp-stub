@@ -20,4 +20,3 @@ final class LoginRoutes[F[_]: Async](
   val routes = internalRoutes.routes <+> openidRoutes.routes
 
   def renderLoginPage = internalRoutes.renderLoginPage
-  def removeCookies = Cookies.remove[F](config)
