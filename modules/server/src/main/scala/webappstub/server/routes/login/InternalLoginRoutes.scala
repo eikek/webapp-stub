@@ -19,11 +19,11 @@ import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
+import soidc.core.model.LogoutRequest
 import soidc.borer.given
 import soidc.http4s.client.ByteEntityDecoder
 import soidc.http4s.routes.JwtAuth
-import soidc.jwt.JoseHeader
-import soidc.jwt.SimpleClaims
+import soidc.jwt.{JoseHeader, SimpleClaims, Uri as JwtUri}
 
 final class InternalLoginRoutes[F[_]: Async](
     realms: ConfiguredRealms[F],
@@ -48,9 +48,20 @@ final class InternalLoginRoutes[F[_]: Async](
 
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
     case ContextRequest(ctx, req @ DELETE -> Root) =>
-      NoContent()
-        .map(Cookies.removeAll(config)(req))
-        .map(_.putHeaders(HxRedirect(uri"/app/login")))
+      val postLogoutRedirect = ClientRequestInfo.getBaseUrl(config, req) / "app" / "login"
+      val logoutReq = LogoutRequest().withPostLogoutRedirectUri(
+        JwtUri.unsafeFromString(postLogoutRedirect.renderString)
+      )
+      ctx.getToken.traverse(realms.endSessionUri(_, logoutReq)).map(_.flatten).flatMap {
+        case Some(logoutUri) =>
+          NoContent()
+            .map(Cookies.removeAll(config)(req))
+            .map(_.putHeaders(HxRedirect(logoutUri)))
+        case None =>
+          NoContent()
+            .map(Cookies.removeAll(config)(req))
+            .map(_.putHeaders(HxRedirect(uri"/app/login")))
+      }
 
     case ContextRequest(ctx, req @ GET -> Root) =>
       if (ctx.isAuthenticated) Found(Location(uri"/app/contacts"))

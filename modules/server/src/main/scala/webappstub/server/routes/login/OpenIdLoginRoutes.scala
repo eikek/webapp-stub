@@ -99,7 +99,7 @@ final class OpenIdLoginRoutes[F[_]: Async](
       val baseUrl = ClientRequestInfo.getBaseUrl(config, req) / "app" / "login" / "openid"
       openIdRealm(name)
         .semiflatMap { flow =>
-          flow.run(req, baseUrl) {
+          flow.run(req, baseUrl / name) {
             case Left(err) => Forbidden(View.loginFailed(err.toString()))
             case Right(AuthCodeFlow.Result.Success(token, idResp)) =>
               val username = idResp.idToken
