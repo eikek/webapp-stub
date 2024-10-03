@@ -22,7 +22,7 @@ import org.http4s.scalatags.*
 import soidc.core.model.LogoutRequest
 import soidc.borer.given
 import soidc.http4s.client.ByteEntityDecoder
-import soidc.http4s.routes.JwtAuth
+import soidc.http4s.routes.{JwtAuth, asJwtAuthOpt}
 import soidc.jwt.{JoseHeader, SimpleClaims, Uri as JwtUri}
 
 final class InternalLoginRoutes[F[_]: Async](
@@ -38,6 +38,7 @@ final class InternalLoginRoutes[F[_]: Async](
     .withGetToken(RememberMeCookie.getToken)
     .withValidator(realms.rememberMeRealm.validator)
     .securedOrAnonymous
+    .asJwtAuthOpt
 
   def findRememberMe(req: Request[F]): F[Option[RememberMeToken]] =
     rememberMeAuth(req).subflatMap(_.getToken).value

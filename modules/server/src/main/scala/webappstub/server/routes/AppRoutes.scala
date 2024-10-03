@@ -25,7 +25,6 @@ import soidc.jwt.SimpleClaims
 
 final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
     extends Htmx4sDsl[F]:
-  private val logger = scribe.cats.effect[F]
 
   val uiConfig = UiConfig.fromConfig(config)
   val login = LoginRoutes[F](backend, config, uiConfig)
@@ -37,7 +36,6 @@ final class AppRoutes[F[_]: Async](backend: Backend[F], config: Config)
   def withJwtAuth(realm: WebappstubRealm[F]) = JwtAuthMiddleware
     .builder[F, JoseHeader, SimpleClaims]
     .withGeToken(GetToken.anyOf(GetToken.bearer, GetToken.cookie("webappstub_auth")))
-    .withOnInvalidToken(err => logger.warn(s"Token validation error: $err"))
     .withValidator(realm.validator)
     .withRefresh(
       realm.jwtRefresh,

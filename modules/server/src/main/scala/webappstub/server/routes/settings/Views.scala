@@ -36,7 +36,7 @@ object Views extends Components:
         )
       ),
       div(
-        cls := s"flex flex-col space-y-1 absolute top-10 left-0 ${Styles.borderBtn} $hidden",
+        cls := s"flex flex-col space-y-1 absolute top-10 left-0 dark:bg-stone-800 bg-white ${Styles.borderBtn} $hidden",
         UiLanguage.all.map { lang =>
           a(
             attr.hxPost := "/app/settings/language",

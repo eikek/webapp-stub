@@ -1,5 +1,9 @@
 # webapp stub
 
+- [ ] cache of view responses
+- [ ] retry startup connecting to postgres
+
+
 This is a template repository for making starting a new Scala3 project
 a bit quicker. It provides a runnable web application, github actions
 etc.
