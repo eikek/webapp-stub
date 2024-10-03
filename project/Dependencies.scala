@@ -26,7 +26,7 @@ object Dependencies {
     val scribe = "3.15.0"
     val skunk = "1.1.0-M3"
     val fontawesome = "6.6.0"
-    val htmx4s = "0.2.0"
+    val htmx4s = "0.2.1"
     val htmx = "2.0.2"
     val htmxResponseTargets = "2.0.1"
     val http4sScalatags = "0.25.2"
