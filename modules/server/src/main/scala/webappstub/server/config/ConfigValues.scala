@@ -75,7 +75,8 @@ object ConfigValues extends ConfigDecoders:
     config("POSTGRES_USER"),
     config("POSTGRES_PASSWORD").redacted.as[Password],
     config("POSTGRES_DEBUG", "false").as[Boolean],
-    config("POSTGRES_MAX_CONNECTIONS", "8").as[Int]
+    config("POSTGRES_MAX_CONNECTIONS", "8").as[Int],
+    config("POSTGRES_CONNECT_RETRY_DELAY", "10 seconds").as[FiniteDuration]
   ).mapN(PostgresConfig.apply)
 
   val bindHost = config("BIND_HOST", "localhost").as[Host]

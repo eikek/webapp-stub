@@ -1,7 +1,8 @@
 # webapp stub
 
 - [ ] cache of view responses
-- [ ] retry startup connecting to postgres
+- [ ] better error page when openid sends error (invalid client creds
+      for example)
 
 
 This is a template repository for making starting a new Scala3 project
@@ -35,7 +36,7 @@ The favicon example is from [favicon.io](https://favicon.io).
 ### Included "Stub-Features"
 
 It is usually a bit easier to remove things, so this stub implements
-some basic functiality that is useful across all projcts.
+some basic functiality that can be useful across all projcts.
 
 - basic sbt setup with the above modules, making use of the following:
   - typelevel stack: cats-effect, fs2
@@ -48,11 +49,10 @@ some basic functiality that is useful across all projcts.
 - basic site layout with a top bar
 - user authenication with password or "auto-user" mode (then some
   pre-defined user is logged in automatically)
+- openid connect integration
 - user registration
 - a "version" route for getting version information
-- a http4s `ContextMiddleware` that is supposed to handle common
-  request inputs, like authentication and settings (ui theme) and
-  possibly other things like language etc.
+- a http4s `AccountMiddleware` for routes requiring an existing accout
 - github actions for doing ci and release zips to github release page
 - release-drafter setup
 - nix dev and ci setup

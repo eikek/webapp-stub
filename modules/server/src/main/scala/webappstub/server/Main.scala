@@ -9,11 +9,11 @@ import webappstub.server.common.Responses
 import webappstub.server.config.ScribeConfigure
 import webappstub.server.routes.AppRoutes
 
+import org.http4s.*
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger as Http4sLogger
-import org.http4s.{HttpRoutes, Response, Status}
 import org.typelevel.otel4s.trace.Tracer
 
 object Main extends IOApp:
@@ -39,13 +39,22 @@ object Main extends IOApp:
               .withHost(cfg.bindHost)
               .withPort(cfg.bindPort)
               .withHttpApp(
-                Http4sLogger.httpApp(true, false)(routes.orNotFound)
+                Http4sLogger.httpApp(
+                  logHeaders = true,
+                  logBody = false,
+                  logAction = Some(msg => logger.trace(msg))
+                )(routes.orNotFound)
               )
               .withShutdownTimeout(0.millis)
-              .withErrorHandler { case ex =>
-                logger
-                  .error("Service raised an error!", ex)
-                  .as(Response(status = Status.InternalServerError))
+              .withErrorHandler {
+                case ex: DecodeFailure =>
+                  logger
+                    .warn("Error decoding message!", ex)
+                    .as(ex.toHttpResponse(HttpVersion.`HTTP/1.1`))
+                case ex =>
+                  logger
+                    .error("Service raised an error!", ex)
+                    .as(Response(status = Status.InternalServerError))
               }
               .build
               .use(_ => IO.never)

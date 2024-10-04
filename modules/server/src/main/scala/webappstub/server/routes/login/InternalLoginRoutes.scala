@@ -19,8 +19,8 @@ import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
 import org.http4s.scalatags.*
-import soidc.core.model.LogoutRequest
 import soidc.borer.given
+import soidc.core.model.LogoutRequest
 import soidc.http4s.client.ByteEntityDecoder
 import soidc.http4s.routes.{JwtAuth, asJwtAuthOpt}
 import soidc.jwt.{JoseHeader, SimpleClaims, Uri as JwtUri}

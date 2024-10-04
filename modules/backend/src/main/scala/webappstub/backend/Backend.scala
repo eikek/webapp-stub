@@ -24,8 +24,9 @@ object Backend:
   def apply[F[_]: Tracer: Network: Console: Async](
       cfg: BackendConfig
   ): Resource[F, Backend[F]] =
+    val logger = scribe.cats.effect[F]
     for
-      session <- SkunkSession[F](cfg.database)
+      session <- SkunkSession[F](cfg.database, logger)
       _ <- Resource.eval(session.use(s => SchemaMigration(s).migrate))
       client <- EmberClientBuilder.default[F].build
       contactRepo = new PostgresContactRepo[F](session)

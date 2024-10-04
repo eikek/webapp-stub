@@ -1,5 +1,7 @@
 package webappstub.store
 
+import scala.concurrent.duration.Duration
+
 import cats.effect.*
 import cats.effect.std.Random
 import cats.syntax.all.*
@@ -44,7 +46,7 @@ trait PostgresTest {
       fromEnv("WEBAPPSTUB_POSTGRES_PASSWORD", s => Password(s).some)
         .getOrElse(Password("dev"))
 
-    PostgresConfig(pgHost, pgPort, pgDb, pgUser, pgPass, false, 6)
+    PostgresConfig(pgHost, pgPort, pgDb, pgUser, pgPass, false, 6, Duration.Zero)
   }
 
   private val initSession: Resource[IO, Session[IO]] = makeSession(initConfig)
