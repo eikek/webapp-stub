@@ -102,7 +102,8 @@ final class OpenIdLoginRoutes[F[_]: Async](
           flow.run(req, baseUrl / name) {
             case Left(err) => Forbidden(View.loginFailed(err.toString()))
             case Right(AuthCodeFlow.Result.Success(token, idResp)) =>
-              val username = idResp.idToken
+              val username = idResp.idTokenJWS
+                .flatMap(_.toOption)
                 .flatMap(_.decode[JoseHeader, SimpleClaims].toOption)
                 .flatMap(
                   _.claims.values
