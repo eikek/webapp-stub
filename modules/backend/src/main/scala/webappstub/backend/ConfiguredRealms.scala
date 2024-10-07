@@ -15,15 +15,17 @@ import soidc.borer.given
 import soidc.core.model.LogoutRequest
 import soidc.core.{AuthorizationCodeFlow as ACF, *}
 import soidc.http4s.client.Http4sClient
-import soidc.jwt.*
+import soidc.jwt.{Uri as JwtUri, *}
 
 trait ConfiguredRealms[F[_]] extends WebappstubRealm[F]:
   def localRealm: InternalRealm[F]
   def rememberMeRealm: InternalRealm[F]
   def openIdRealms: Map[String, OpenIdRealm[F]]
+  def githubAuth: Option[(String, GitHubOAuth[F])]
   def endSessionUri(jws: AuthToken, req: LogoutRequest): F[Option[Uri]]
 
 object ConfiguredRealms:
+  val githubUri: JwtUri = JwtUri.unsafeFromString("https://github.com")
 
   def apply[F[_]: Clock: Sync](
       cfg: AuthConfig,
@@ -37,6 +39,7 @@ object ConfiguredRealms:
       )
 
     val openIdRealms = cfg.openId.toList
+      .filter(_._2.providerUrl != githubUri)
       .traverse { case (name, c) =>
         val acfCfg = ACF.Config(
           c.clientId,
@@ -70,6 +73,16 @@ object ConfiguredRealms:
           )
 
         val openIdRealms: Map[String, OpenIdRealm[F]] = oidr
+
+        val githubAuth: Option[(String, GitHubOAuth[F])] = cfg.openId
+          .find(_._2.providerUrl == githubUri)
+          .map { case (name, oid) =>
+            name -> GitHubOAuth(
+              GitHubOAuth.Config(oid.clientId, secret, oid.clientSecret.some, oid.scope),
+              Http4sClient(client),
+              SoidcLogger(logger)
+            )
+          }
 
         val allRealms = localRealm +: openIdRealms.values.toSeq
         val combinedRealm = allRealms.combineAll

@@ -14,6 +14,7 @@ trait LoginService[F[_]]:
   def loginRememberMe(token: RememberMeToken): F[LoginResult]
   def autoLogin: F[LoginResult]
   def loginExternal(token: AuthToken): F[LoginResult]
+  def loginExternal(id: ExternalAccountId): F[LoginResult]
 
 object LoginService:
 
@@ -24,6 +25,13 @@ object LoginService:
   ): LoginService[F] =
     new LoginService[F] {
       private val logger = scribe.cats.effect[F]
+
+      def loginExternal(id: ExternalAccountId): F[LoginResult] =
+        repo.findByExternalId(id).flatMap {
+          case Some(acc) =>
+            realms.localRealm.makeToken(acc.id).map(LoginResult.Success(_, None))
+          case None => LoginResult.AccountMissing.pure[F]
+        }
 
       def loginExternal(token: AuthToken): F[LoginResult] =
         ExternalAccountId.fromToken(token) match
