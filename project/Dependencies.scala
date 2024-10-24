@@ -13,7 +13,7 @@ object Dependencies {
     val catsParse = "1.0.0"
     val ciris = "3.6.0"
     val decline = "2.4.1"
-    val http4s = "0.23.28"
+    val http4s = "0.23.29"
     val monocle = "3.2.0"
     val munit = "1.0.2"
     val munitCatsEffect = "2.0.0"
