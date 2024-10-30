@@ -63,7 +63,7 @@ private trait ConfigDecoders:
     }
 
   given ConfigDecoder[String, JWK] =
-    ConfigDecoder[String, ByteVector].map(bv => JWK.symmetric(bv, Algorithm.HS256))
+    ConfigDecoder[String, ByteVector].map(bv => JWK.symmetric(bv, Algorithm.Sign.HS256))
 
   given ConfigDecoder[String, JwtUri] =
     ConfigDecoder[String].emap("JwtUri")(JwtUri.fromString)

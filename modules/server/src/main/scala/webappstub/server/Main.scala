@@ -39,7 +39,7 @@ object Main extends IOApp:
               .withHost(cfg.bindHost)
               .withPort(cfg.bindPort)
               .withHttpApp(
-                Http4sLogger.httpApp(
+                Http4sLogger.httpApp[IO](
                   logHeaders = true,
                   logBody = false,
                   logAction = Some(msg => logger.trace(msg))

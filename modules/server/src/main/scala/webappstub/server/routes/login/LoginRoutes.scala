@@ -13,7 +13,7 @@ import htmx4s.http4s.headers.HxRequest
 import org.http4s.*
 import org.http4s.headers.Location
 import org.http4s.implicits.*
-import soidc.core.JwtDecodingValidator.ValidateFailure
+import soidc.core.ValidateFailure
 
 final class LoginRoutes[F[_]: Async](
     backend: Backend[F],

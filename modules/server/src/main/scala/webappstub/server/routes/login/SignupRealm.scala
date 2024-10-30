@@ -16,10 +16,21 @@ import soidc.http4s.routes.GetToken
 import soidc.http4s.routes.JwtAuth
 import soidc.http4s.routes.JwtCookie
 import soidc.jwt.{Uri as _, *}
+import scodec.bits.ByteVector
 
 private[login] class SignupRealm[F[_]: Clock: MonadThrow](auth: AuthConfig):
 
-  val cookieName: String = "webappstub_signup"
+  private val cookieName: String = "webappstub_signup"
+  private val cea = ContentEncryptionAlgorithm.A256GCM
+  private val encKey = SyncIO(cea.generateKey).unsafeRunSync()
+
+  private def encrypt(token: AuthToken): F[String] =
+    MonadThrow[F].fromEither {
+      JWE
+        .encryptSymmetric(encKey, cea, ByteVector.view(token.compact.getBytes))
+        .map(_.compact)
+    }
+
   private val delegate = LocalFlow[F, JoseHeader, SimpleClaims](
     LocalFlow.Config(
       issuer = Provider("webappstub:signup").uri,
@@ -30,15 +41,16 @@ private[login] class SignupRealm[F[_]: Clock: MonadThrow](auth: AuthConfig):
     )
   )
 
-  val jwtAuth = JwtAuth
+  private val jwtAuth = JwtAuth
     .builder[F, JoseHeader, SimpleClaims]
     .withGetToken(GetToken.cookie(cookieName))
     .withValidator(delegate.validator)
+    .withDecryption(encKey)
     .secured
 
   private val provider = ParameterName.of("external_provider")
 
-  def makeToken(id: ExternalAccountId): F[AuthToken] =
+  private def makeToken(id: ExternalAccountId): F[AuthToken] =
     delegate.createToken(
       JoseHeader.jwt,
       SimpleClaims.empty
@@ -47,7 +59,14 @@ private[login] class SignupRealm[F[_]: Clock: MonadThrow](auth: AuthConfig):
     )
 
   def createCookie(id: ExternalAccountId, uri: Uri) =
-    makeToken(id).map(token => JwtCookie.createDecoded(cookieName, token, uri))
+    makeToken(id).flatMap(createCookie(_))
+
+  def createCookie(token: AuthToken, uri: Uri) =
+    val cookie = JwtCookie.createDecoded(cookieName, token, uri)
+    for
+      enc <- encrypt(token)
+      c = cookie.copy(content = enc)
+    yield c
 
   def externalId(req: Request[F]): F[Option[ExternalAccountId]] =
     jwtAuth.run(req).map {

@@ -100,13 +100,12 @@ final class OpenIdLoginRoutes[F[_]: Async](
                     case SignupResult.Success(acc) =>
                       val authToken = req.cookies
                         .find(_.name == postSignupAuthCookie)
-                        .flatMap(c => AuthCookie.parse(c.content))
-                        .map(_.pure[F])
-                        .getOrElse(backend.realms.localRealm.makeToken(acc.id))
+                        .traverse(c => signupRealm.decrypt(c.content))
+                        .map(_.flatMap(AuthCookie.parse))
 
                       authToken.flatMap { t =>
                         Cookies.set(config)(req, t, None)(
-                          NoContent().map(
+                          Ok(Layout.clientRedirect(uri"/app/login")).map(
                             _.putHeaders(
                               HxLocation(HxLocation.Value.Path(uri"/app/login"))
                             )
@@ -163,10 +162,15 @@ final class OpenIdLoginRoutes[F[_]: Async](
                     .collect { case AccountKey.External(id) => id }
                     .traverse(signupRealm.createCookie(_, uri))
 
-                  Ok(Layout.clientRedirect(uri))
-                    .flatMap(r => signupCookie.map(_.map(r.addCookie).getOrElse(r)))
-                    .map(_.addCookie(ResponseCookie(postSignupAuthCookie, token.compact, path = Some("/"))))
-
+                  signupRealm.encypt(token).flatMap { tokenStr =>
+                    Ok(Layout.clientRedirect(uri))
+                      .flatMap(r => signupCookie.map(_.map(r.addCookie).getOrElse(r)))
+                      .map(
+                        _.addCookie(
+                          ResponseCookie(postSignupAuthCookie, tokenStr, path = Some("/"))
+                        )
+                      )
+                  }
                 case LoginResult.InvalidAuth =>
                   Forbidden(View.loginFailed("Authentication failed"))
                 case LoginResult.Success(token, rme) =>
