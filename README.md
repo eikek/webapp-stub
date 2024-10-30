@@ -68,6 +68,75 @@ details to serve this purpose:
 - Example skunk codecs for (nested) case classes
 - a simple idea for i18n with scalatags and htmx
 
+### Authentication Flows
+
+**Local Users**
+
+Login with username and password:
+
+
+```mermaid
+sequenceDiagram
+   participant Browser
+   participant Server
+
+   Browser ->> Server: username=&password=
+   Server ->> Server: validate
+   Server ->> Browser: authToken
+```
+
+Calling the api with an `AuthToken`
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Server
+
+    Browser ->> Server: authToken
+    Server ->> Server: validate
+    Server ->> Server: lookup Account
+```
+
+A valid token does not necessarily mean an existing account, as it
+might have been removed or locked. However, it is expected that an
+account stays active for the validity of a token and only needs to be
+looked up again when a now token is issued.
+
+
+**External Users: OpenID**
+
+When a user is authenticated via OpenID, token validation is passed to
+the OP.
+
+```mermaid
+sequenceDiagram
+  actor Browser
+  participant Server
+  participant OP
+
+  Browser -->> Server: initiate auth flow
+  Note over Browser,OP: OpenID Authorization Code Flow
+  Server ->> OP: get access/id token
+  OP -->> Server: token response
+  alt account exist
+  Server -->> Browser: access_token
+  else account missing
+  Server -->> Browser: signup-token
+  end
+```
+
+When a use is successfully authenticated at the OP, the access token,
+id token and refresh token is retrieved from OP. Then the `subject`
+and `issuer` claims are used to lookup an account in the database. If
+it exists, the access token is returned as an auth token and the
+refresh token is updated.
+
+If the account doesn't exist, the user is directed to a signup page
+and the access_token, id token and refresh token are sent as an
+encrypted cookie. During signup, the information from the token are
+used to create the account eventually. If signup is closed an error is
+returned immediately.
+
 ## Nix
 
 The `flake.nix` provides a convenient development setup. It makes sure

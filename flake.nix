@@ -24,6 +24,7 @@
         ++ (with pkgs; [
           jq
           scala-cli
+          mermaid-cli
         ]);
 
       devEnvVars = {
