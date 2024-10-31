@@ -35,7 +35,7 @@ object ConfiguredRealms:
     val logger = scribe.cats.effect[F]
     val secret =
       cfg.internal.serverSecret.getOrElse(
-        JwkGenerate.symmetric[SyncIO](16).unsafeRunSync()
+        JwkGenerate.symmetricSign[SyncIO](16).unsafeRunSync()
       )
 
     val openIdRealms = cfg.openId.toList

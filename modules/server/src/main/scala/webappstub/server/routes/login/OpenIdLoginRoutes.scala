@@ -63,7 +63,6 @@ final class OpenIdLoginRoutes[F[_]: Async](
           _,
           req @ GET -> Root / "openid-create-account" :? Username(name)
         ) =>
-      // TODO check if account already exists for this external token, or error for internal token
       val settings = Settings.fromRequest(req)
       Ok(
         Layout("Signup", settings.theme)(

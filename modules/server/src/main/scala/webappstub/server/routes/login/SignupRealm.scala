@@ -11,7 +11,6 @@ import webappstub.backend.auth.AuthConfig
 import webappstub.common.model.*
 
 import org.http4s.*
-import scodec.bits.ByteVector
 import soidc.borer.given
 import soidc.core.*
 import soidc.http4s.routes.GetToken
@@ -21,7 +20,7 @@ import soidc.jwt.{Uri as _, *}
 
 private[login] class SignupRealm[F[_]: Clock: MonadThrow](auth: AuthConfig):
   private val cea = ContentEncryptionAlgorithm.A256GCM
-  private val encKey = SyncIO(cea.generateKey).unsafeRunSync()
+  private val encKey = JwkGenerate.symmetricEncrypt[SyncIO](cea).unsafeRunSync()
 
   private val validCookie = "webappstub_signup"
   private val atCookie = "webappstub_signup_at"
@@ -42,18 +41,8 @@ private[login] class SignupRealm[F[_]: Clock: MonadThrow](auth: AuthConfig):
       atcPlain <- OptionT.liftF(decrypt(atc))
       rtcPlain <- OptionT.liftF(rtc.traverse(decrypt))
 
-      atcJws <- OptionT.liftF(
-        MonadThrow[F].fromEither(
-          JWS
-            .fromString(atcPlain)
-            .left
-            .map(JwtError.DecodeError(_))
-            .flatMap(_.decode[JoseHeader, SimpleClaims])
-        )
-      )
-      eId <- OptionT.fromOption(atcJws.accountKey.flatMap(_.fold(_ => None, _.some)))
-      rtcJws = rtcPlain.map(JWS.fromString).flatMap(_.toOption)
-    yield Data(atcJws, eId, rtcJws)
+      eId <- OptionT.fromOption(atcPlain.accountKey.flatMap(_.fold(_ => None, _.some)))
+    yield Data(atcPlain, eId, rtcPlain.map(_.jws))
 
   def createData(
       accessToken: AuthToken,
@@ -69,36 +58,35 @@ private[login] class SignupRealm[F[_]: Clock: MonadThrow](auth: AuthConfig):
       case Some(d) =>
         for
           vt <- makeToken.map(t => JwtCookie.createDecoded(validCookie, t, uri))
-          at <- encrypt(d.accessToken.compact)
-          rt <- d.refreshToken.traverse(e => encrypt(e.compact))
+          at <- encrypt(d.accessToken.jws)
+          rt <- d.refreshToken.traverse(encrypt)
           atc = vt.copy(content = at, name = atCookie)
           rtc = rt.map(e => vt.copy(content = e, name = rtCookie))
           n = r.addCookie(vt).addCookie(atc)
           nn = rtc.map(n.addCookie).getOrElse(n)
         yield nn
 
-  private def encrypt(token: String): F[String] =
+  private def encrypt(token: JWS): F[String] =
     MonadThrow[F].fromEither {
       JWE
-        .encryptSymmetric(encKey, cea, ByteVector.view(token.getBytes))
+        .encryptJWS(
+          JoseHeader.jwe(Algorithm.Encrypt.dir, cea),
+          token,
+          encKey
+        )
         .map(_.compact)
     }
 
-  private def decrypt(token: String): F[String] =
+  private def decrypt(token: String): F[AuthToken] =
     MonadThrow[F].fromEither {
-      JWE
-        .fromString(token)
-        .left
-        .map(JwtError.DecodeError(_))
-        .flatMap(_.decryptSymmetric[JoseHeader](encKey))
-        .map(_.decodeUtf8Lenient)
+      JWE.decryptStringToJWS[JoseHeader, SimpleClaims](token, encKey)
     }
 
   private val delegate = LocalFlow[F, JoseHeader, SimpleClaims](
     LocalFlow.Config(
       issuer = Provider("webappstub:signup").uri,
       secretKey = auth.internal.serverSecret.getOrElse(
-        JwkGenerate.symmetric[SyncIO]().unsafeRunSync()
+        JwkGenerate.symmetricSign[SyncIO]().unsafeRunSync()
       ),
       sessionValidTime = 5.minutes
     )

@@ -61,7 +61,7 @@ object Codecs:
     (provider *: c.varchar).to[ExternalAccountId]
 
   val jws: Codec[JWS] =
-    c.varchar.eimap(JWS.fromString)(_.compact)
+    c.varchar.eimap(e => JWS.fromString(e).left.map(_.message))(_.compact)
 
   val account: Codec[Account] =
     (accountId *: accountState *: loginName *: password *: externalAccountId.opt *: jws.opt *: instant)
