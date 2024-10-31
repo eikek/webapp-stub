@@ -1,4 +1,5 @@
 package webappstub.server.routes.login
+
 import cats.data.OptionT
 import cats.effect.*
 import cats.syntax.all.*
@@ -24,8 +25,10 @@ import soidc.http4s.client.ByteEntityDecoder
 import soidc.http4s.routes.AuthCodeFlow
 import soidc.http4s.routes.AuthCodeFlow.Result.Success
 import soidc.http4s.routes.GitHubFlow
+import soidc.jwt.JWSDecoded
 import soidc.jwt.JoseHeader
 import soidc.jwt.SimpleClaims
+import soidc.jwt.StringOrUri
 
 final class OpenIdLoginRoutes[F[_]: Async](
     backend: Backend[F],
@@ -55,41 +58,35 @@ final class OpenIdLoginRoutes[F[_]: Async](
 
   private val signupRealm = SignupRealm[F](config.backend.auth)
 
-  private val postSignupAuthCookie = "webappstub_post_signup"
-
-  def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
+  def signupRoutes = AuthedRoutes.of[Authenticated, F] {
     case ContextRequest(
           _,
           req @ GET -> Root / "openid-create-account" :? Username(name)
         ) =>
       // TODO check if account already exists for this external token, or error for internal token
       val settings = Settings.fromRequest(req)
-      signupRealm.externalId(req).flatMap {
-        case None => NotFound()
-        case Some(_) =>
-          Ok(
-            Layout("Signup", settings.theme)(
-              View.signupView(
-                uiCfg,
-                settings,
-                config.backend.signup.mode,
-                Model.SignupForm(user = name.orEmpty),
-                None
-              )
-            )
+      Ok(
+        Layout("Signup", settings.theme)(
+          View.signupView(
+            uiCfg,
+            settings,
+            config.backend.signup.mode,
+            Model.SignupForm(user = name.orEmpty),
+            None
           )
-      }
+        )
+      )
 
-    case ContextRequest(context, req @ POST -> Root / "openid-create-account") =>
-      signupRealm.externalId(req).flatMap {
+    case ContextRequest(_, req @ POST -> Root / "openid-create-account") =>
+      signupRealm.extract(req).value.flatMap {
         case None =>
           logger.warn(s"token in request has no account key") >> Forbidden()
-        case Some(id) =>
+        case Some(tokens) =>
           for
             data <- req.as[Model.SignupForm]
             settings = Settings.fromRequest(req)
             resp <- data
-              .toModel(id)
+              .toModel(tokens.externalId, tokens.refreshToken)
               .fold(
                 errs =>
                   BadRequest(
@@ -98,90 +95,94 @@ final class OpenIdLoginRoutes[F[_]: Async](
                 sreq =>
                   backend.signup.signup(sreq).flatMap {
                     case SignupResult.Success(acc) =>
-                      val authToken = req.cookies
-                        .find(_.name == postSignupAuthCookie)
-                        .traverse(c => signupRealm.decrypt(c.content))
-                        .map(_.flatMap(AuthCookie.parse))
+                      val authToken =
+                        if (tokens.accessToken.jws.signature.isDefined)
+                          tokens.accessToken.pure[F]
+                        else backend.realms.localRealm.makeToken(acc.id)
 
                       authToken.flatMap { t =>
                         Cookies.set(config)(req, t, None)(
-                          Ok(Layout.clientRedirect(uri"/app/login")).map(
-                            _.putHeaders(
-                              HxLocation(HxLocation.Value.Path(uri"/app/login"))
+                          Ok(Layout.clientRedirect(uri"/app/login"))
+                            .map(
+                              _.putHeaders(
+                                HxLocation(HxLocation.Value.Path(uri"/app/login"))
+                              )
                             )
-                              .removeCookie(postSignupAuthCookie)
-                              .removeCookie(signupRealm.cookieName)
-                          )
+                            .map(signupRealm.removeCookies)
                         )
                       }
+
                     case result =>
                       UnprocessableEntity(View.signupResult(settings, result))
                   }
               )
           yield resp
       }
-
-    case ContextRequest(_, req @ GET -> ("openid" /: name /: _)) =>
-      val baseUrl = ClientRequestInfo.getBaseUrl(config, req) / "app" / "login" / "openid"
-      val forGithub = getGithubFlow(name)
-        .semiflatMap { flow =>
-          flow.run(req, baseUrl / name) {
-            case Left(err) => Forbidden(View.loginFailed(err.toString()))
-            case Right(GitHubFlow.Result.Success(user, resp)) =>
-              val username = user.login.orEmpty
-              val accountId = ExternalAccountId(Provider.github, user.id.toString())
-              backend.login.loginExternal(accountId).flatMap {
-                case LoginResult.AccountMissing =>
-                  val uri = uri"/app/login/openid-create-account"
-                    .withQueryParam(Username.key, username)
-                  val resp = Ok(Layout.clientRedirect(uri))
-                  signupRealm.createCookie(accountId, uri).flatMap { cookie =>
-                    resp.map(_.addCookie(cookie))
-                  }
-
-                case LoginResult.InvalidAuth =>
-                  Forbidden(View.loginFailed("Authentication failed"))
-                case LoginResult.Success(token, rme) =>
-                  val resp = Ok(Layout.clientRedirect(uri"/app/contacts"))
-                  Cookies.set(config)(req, token, rme)(resp)
-              }
-          }
-        }
-      val forOpenid = openIdRealm(name)
-        .semiflatMap { flow =>
-          flow.run(req, baseUrl / name) {
-            case Left(err) => Forbidden(View.loginFailed(err.toString()))
-            case Right(AuthCodeFlow.Result.Success(token, idResp)) =>
-              // must use client redirects, browser don't send the cookie
-              backend.login.loginExternal(token).flatMap {
-                case LoginResult.AccountMissing =>
-                  val username = preferredName(idResp)
-                  val uri = uri"/app/login/openid-create-account"
-                    .withQueryParam(Username.key, username)
-                  val signupCookie = token.accountKey
-                    .collect { case AccountKey.External(id) => id }
-                    .traverse(signupRealm.createCookie(_, uri))
-
-                  signupRealm.encypt(token).flatMap { tokenStr =>
-                    Ok(Layout.clientRedirect(uri))
-                      .flatMap(r => signupCookie.map(_.map(r.addCookie).getOrElse(r)))
-                      .map(
-                        _.addCookie(
-                          ResponseCookie(postSignupAuthCookie, tokenStr, path = Some("/"))
-                        )
-                      )
-                  }
-                case LoginResult.InvalidAuth =>
-                  Forbidden(View.loginFailed("Authentication failed"))
-                case LoginResult.Success(token, rme) =>
-                  val resp = Ok(Layout.clientRedirect(uri"/app/contacts"))
-                  Cookies.set(config)(req, token, rme)(resp)
-              }
-          }
-        }
-
-      (forGithub <+> forOpenid).getOrElseF(NotFound())
   }
+
+  def signup: HttpRoutes[F] = signupRealm.secured(signupRoutes)
+
+  def signin = HttpRoutes.of[F] { case req @ GET -> ("openid" /: name /: _) =>
+    val baseUrl = ClientRequestInfo.getBaseUrl(config, req) / "app" / "login" / "openid"
+    val forGithub = getGithubFlow(name)
+      .semiflatMap { flow =>
+        flow.run(req, baseUrl / name) {
+          case Left(err) => Forbidden(View.loginFailed(err.toString()))
+          case Right(GitHubFlow.Result.Success(user, resp)) =>
+            val username = user.login.orEmpty
+            val accountId = ExternalAccountId(Provider.github, user.id.toString())
+            backend.login.loginExternal(accountId).flatMap {
+              case LoginResult.AccountMissing =>
+                val uri = uri"/app/login/openid-create-account"
+                  .withQueryParam(Username.key, username)
+                val token: AuthToken = JWSDecoded.createUnsigned(
+                  JoseHeader.jwt,
+                  SimpleClaims.empty
+                    .withIssuer(Provider.github.uri)
+                    .withSubject(StringOrUri(user.id.toString))
+                )
+                val signupData = signupRealm.createData(token, None)
+                Ok(Layout.clientRedirect(uri))
+                  .flatMap(signupRealm.addData(signupData, uri))
+
+              case LoginResult.InvalidAuth =>
+                Forbidden(View.loginFailed("Authentication failed"))
+              case LoginResult.Success(token, rme) =>
+                val resp = Ok(Layout.clientRedirect(uri"/app/contacts"))
+                Cookies.set(config)(req, token, rme)(resp)
+            }
+        }
+      }
+    val forOpenid = openIdRealm(name)
+      .semiflatMap { flow =>
+        flow.run(req, baseUrl / name) {
+          case Left(err) => Forbidden(View.loginFailed(err.toString()))
+          case Right(AuthCodeFlow.Result.Success(token, idResp)) =>
+            // must use client redirects, browser don't send the cookie
+            backend.login.loginExternal(token).flatMap {
+              case LoginResult.AccountMissing =>
+                val username = preferredName(idResp)
+                val uri = uri"/app/login/openid-create-account"
+                  .withQueryParam(Username.key, username)
+                val signupData = signupRealm
+                  .createData(token, idResp.refreshTokenJWS.flatMap(_.toOption))
+
+                Ok(Layout.clientRedirect(uri))
+                  .flatMap(signupRealm.addData(signupData, uri))
+
+              case LoginResult.InvalidAuth =>
+                Forbidden(View.loginFailed("Authentication failed"))
+              case LoginResult.Success(token, rme) =>
+                val resp = Ok(Layout.clientRedirect(uri"/app/contacts"))
+                Cookies.set(config)(req, token, rme)(resp)
+            }
+        }
+      }
+
+    (forGithub <+> forOpenid).getOrElseF(NotFound())
+  }
+
+  def routes = signin <+> signup
 
   private def preferredName(resp: TokenResponse.Success) =
     resp.idTokenJWS

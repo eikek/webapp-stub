@@ -5,6 +5,8 @@ import soidc.jwt.*
 package object model {
 
   type AuthToken = JWSDecoded[JoseHeader, SimpleClaims]
+  type RefreshToken = JWSDecoded[JoseHeader, SimpleClaims]
+  type IdToken = JWSDecoded[JoseHeader, SimpleClaims]
   type RememberMeToken = JWSDecoded[JoseHeader, SimpleClaims]
 
   extension (self: AuthToken)

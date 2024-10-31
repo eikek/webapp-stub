@@ -33,14 +33,17 @@ object Model extends ParamDecoders:
       user: String = "",
       inviteKey: Option[String] = None
   ):
-    def toModel(id: ExternalAccountId): LoginValid[SignupRequest] = {
+    def toModel(
+        id: ExternalAccountId,
+        refreshToken: Option[JWS]
+    ): LoginValid[SignupRequest] = {
       val login = LoginName.fromString(user).toValidatedNel.keyed(Key.LoginName)
       val ik = inviteKey match
         case None => None.valid[Key, String]
         case Some(k) =>
           InviteKey.fromString(k).toValidatedNel.keyed(Key.Invite).map(_.some)
 
-      (login, Some(id).valid, Option.empty[JWS].valid, ik).mapN(SignupRequest.external)
+      (login, Some(id).valid, refreshToken.valid, ik).mapN(SignupRequest.external)
     }
 
   object SignupForm:

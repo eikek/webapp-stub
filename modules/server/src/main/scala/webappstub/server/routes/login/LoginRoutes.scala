@@ -5,6 +5,7 @@ import cats.syntax.all.*
 
 import webappstub.backend.Backend
 import webappstub.server.Config
+import webappstub.server.context.*
 import webappstub.server.routes.UiConfig
 
 import htmx4s.http4s.Htmx4sDsl
@@ -26,7 +27,9 @@ final class LoginRoutes[F[_]: Async](
     InternalLoginRoutes[F](backend.realms, backend.login, config, uiCfg)
   private val openidRoutes = OpenIdLoginRoutes[F](backend, config, uiCfg)
 
-  val routes = internalRoutes.routes <+> openidRoutes.routes
+  val routes = internalRoutes.routes <+> AuthedRoutes[MaybeAuthenticated, F](rr =>
+    openidRoutes.routes(rr.req)
+  )
 
   val redirectToLogin: AuthedRoutes[ValidateFailure, F] =
     AuthedRoutes.of {
