@@ -11,7 +11,7 @@ object Dependencies {
     val bcrypt = "0.4"
     val catsEffect = "3.5.4"
     val catsParse = "1.0.0"
-    val ciris = "3.6.0"
+    val ciris = "3.7.0"
     val decline = "2.4.1"
     val http4s = "0.23.29"
     val monocle = "3.2.0"
