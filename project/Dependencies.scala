@@ -28,7 +28,7 @@ object Dependencies {
     val fontawesome = "6.6.0"
     val htmx4s = "0.2.1"
     val htmx = "2.0.3"
-    val htmxResponseTargets = "2.0.1"
+    val htmxResponseTargets = "2.0.2"
     val http4sScalatags = "0.25.2"
     val flagIcons = "7.2.3"
   }
