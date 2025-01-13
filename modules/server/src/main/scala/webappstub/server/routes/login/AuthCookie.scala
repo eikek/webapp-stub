@@ -20,9 +20,8 @@ object AuthCookie:
     JwtCookie
       .create(value, token.jws, uri)
       .copy(expires =
-        token.claims.expirationTime.map(exp =>
-          HttpDate.unsafeFromEpochSecond(exp.toSeconds)
-        )
+        token.claims.expirationTime
+          .map(exp => HttpDate.unsafeFromEpochSecond(exp.toSeconds))
       )
 
   def parse(cnt: String): Option[AuthToken] =

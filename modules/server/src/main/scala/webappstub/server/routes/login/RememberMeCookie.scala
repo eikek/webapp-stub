@@ -19,7 +19,6 @@ object RememberMeCookie:
     JwtCookie
       .create(value, token.jws, uri)
       .copy(expires =
-        token.claims.expirationTime.map(exp =>
-          HttpDate.unsafeFromEpochSecond(exp.toSeconds)
-        )
+        token.claims.expirationTime
+          .map(exp => HttpDate.unsafeFromEpochSecond(exp.toSeconds))
       )

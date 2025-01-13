@@ -61,5 +61,4 @@ object ContactService:
         repo.findByEmail(account, email)
 
       def findById(id: ContactId): F[Option[Contact]] =
-        repo.findById(id)
-    )
+        repo.findById(id))
