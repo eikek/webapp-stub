@@ -30,7 +30,7 @@ object Dependencies {
     val htmx = "2.0.3"
     val htmxResponseTargets = "2.0.1"
     val http4sScalatags = "0.25.2"
-    val flagIcons = "7.2.3"
+    val flagIcons = "7.2.4"
   }
 
   val soidcJwt = Seq(
