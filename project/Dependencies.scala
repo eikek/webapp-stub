@@ -4,16 +4,16 @@ import sbt.Keys.scalaVersion
 object Dependencies {
 
   object V {
-    val scala3 = "3.5.2"
+    val scala3 = "3.6.2"
 
-    val borer = "1.14.1"
+    val borer = "1.15.0"
     val borerCompats = "0.1.0-SNAPSHOT"
     val bcrypt = "0.4"
     val catsEffect = "3.5.4"
     val catsParse = "1.0.0"
-    val ciris = "3.6.0"
+    val ciris = "3.7.0"
     val decline = "2.4.1"
-    val http4s = "0.23.29"
+    val http4s = "0.23.30"
     val monocle = "3.2.0"
     val munit = "1.0.2"
     val munitCatsEffect = "2.0.0"
@@ -25,10 +25,10 @@ object Dependencies {
     val scalaCheck = "1.17.0"
     val scribe = "3.15.2"
     val skunk = "1.1.0-M3"
-    val fontawesome = "6.6.0"
+    val fontawesome = "6.7.1"
     val htmx4s = "0.2.1"
     val htmx = "2.0.4"
-    val htmxResponseTargets = "2.0.1"
+    val htmxResponseTargets = "2.0.2"
     val http4sScalatags = "0.25.2"
     val flagIcons = "7.2.3"
   }
