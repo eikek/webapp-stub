@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     devshell-tools.url = "github:eikek/devshell-tools";
     flake-utils.url = "github:numtide/flake-utils";
   };
@@ -45,7 +45,7 @@
           WEBAPPSTUB_AUTH_OPENID_PROVIDERS = "keycloak";
           WEBAPPSTUB_OPENID_KEYCLOAK_PROVIDER_URI = "http://wasdev:8180/realms/Webappstub";
           WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_ID = "webappstub";
-          WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_SECRET = "Jgcq6HhtFRs8sboHu81VpRrgYiEjyen4";
+          WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_SECRET = "NOnDASN4JskXbiJUHfu2AUfJ75h9Qq1b";
       };
     in {
       formatter = pkgs.alejandra;

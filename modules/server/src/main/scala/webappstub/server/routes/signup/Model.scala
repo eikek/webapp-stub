@@ -6,7 +6,6 @@ import cats.syntax.all.*
 import webappstub.common.model.*
 import webappstub.server.routes.signup.SignupError.Key
 
-import htmx4s.http4s.util.ErrorMessage
 import htmx4s.http4s.util.ValidationDsl.*
 import htmx4s.http4s.util.ValidationErrors
 import org.http4s.FormDataDecoder

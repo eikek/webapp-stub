@@ -27,7 +27,7 @@ trait ConfiguredRealms[F[_]] extends WebappstubRealm[F]:
 object ConfiguredRealms:
   val githubUri: JwtUri = JwtUri.unsafeFromString("https://github.com")
 
-  def apply[F[_]: Clock: Sync](
+  def apply[F[_]: Sync](
       cfg: AuthConfig,
       repo: AccountRepo[F],
       client: Client[F]
