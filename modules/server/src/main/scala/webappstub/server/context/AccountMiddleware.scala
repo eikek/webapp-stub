@@ -35,7 +35,6 @@ final class AccountMiddleware[F[_]: Monad](cfg: Config[F]):
     val token = jwtReq.context.token
     token.accountKey match
       case Some(key) =>
-        println(s"Got account key: $key")
         val nextReq = OptionT(cfg.lookup(key)).map(a =>
           ContextRequest(Context.Account(a.id, token.claims), jwtReq.req)
         )
