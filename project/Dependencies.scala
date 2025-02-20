@@ -17,7 +17,7 @@ object Dependencies {
     val monocle = "3.2.0"
     val munit = "1.1.0"
     val munitCatsEffect = "2.0.0"
-    val munitScalaCheck = "1.0.0"
+    val munitScalaCheck = "1.1.0"
     val scodec2 = "2.2.2"
     val catsCore = "2.9.0"
     val fs2 = "3.11.0"
