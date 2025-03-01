@@ -10,15 +10,9 @@ dry_run=${DRY_RUN:-0}
 if [ -z "$new_name" ]; then
     read -p "What is the new name: " new_name
 fi
-if [ -z "$user_name" ]; then
-    read -p "Your git name: " user_name
-fi
-if [ -z "$user_email" ]; then
-    read -p "Your git email: " user_email
-fi
+new_name_caps="$(echo $new_name | tr 'a-z' 'A-Z')"
 
 echo "Renaming 'webapp-stub' -> '$new_name' …"
-echo "Setup git for $user_name <$user_email>"
 
 echo "Rename directories…"
 for d in $(find modules -type d -name "webappstub"); do
@@ -35,6 +29,7 @@ for f in $(find modules -type f -name "*.scala"); do
     if [ $dry_run -eq 0 ]; then
         sed -i -e "s/webappstub/$new_name/g" "$f"
         sed -i -e "s/Webappstub/${new_name^}/g" "$f"
+        sed -i -e "s/WEBAPPSTUB/$new_name_caps/g" "$f"
     fi
 done
 
@@ -55,10 +50,20 @@ if [ $dry_run -eq 0 ]; then
     sed -i -e "s/wasdev/$cnt_name/g" flake.nix
     sed -i -e "s/wasvm/$vm_name/g" flake.nix
     sed -i -e "s/webappstub/$new_name/g" flake.nix
+    sed -i -e "s/Webappstub/${new_name^}/g" flake.nix
+    sed -i -e "s/WEBAPPSTUB/$new_name_caps/g" flake.nix
 fi
 
 read -p "Re-initialize git? (y/n) " reinit_git
 if [ "$reinit_git" == "y" ]; then
+    if [ -z "$user_name" ]; then
+        read -p "Your git name: " user_name
+    fi
+    if [ -z "$user_email" ]; then
+        read -p "Your git email: " user_email
+    fi
+    echo "Setup git for $user_name <$user_email>"
+
     rm -rf .git/
     git init
     git branch -M main
