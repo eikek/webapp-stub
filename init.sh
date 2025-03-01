@@ -23,6 +23,19 @@ for d in $(find modules -type d -name "webappstub"); do
     fi
 done
 
+echo "Rename files…"
+for f in $(find modules -type f -iname "*webappstub*"); do
+    name="$(basename "$f")"
+    target_name=$(echo "$name" | sed "s/webappstub/$new_name/g")
+    target_name=$(echo "$target_name" | sed "s/Webappstub/${new_name^}/g")
+    target_name=$(echo "$target_name" | sed "s/WEBAPPSTUB/$new_name_caps/g")
+    target="$(dirname "$f")/$target_name"
+    if [ "$f" != "$target" ]; then
+        echo "Move $f -> $target"
+        mv "$f" "$target"
+    fi
+done
+
 echo "Fix source files…"
 for f in $(find modules -type f -name "*.scala"); do
     echo "Fix $f"
