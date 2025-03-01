@@ -15,6 +15,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
       ciPkgs = with pkgs; [
         devshell-tools.packages.${system}.sbt17
+        devshell-tools.packages.${system}.postgres-fg
         jdk17
         tailwindcss
         terser
@@ -33,6 +34,7 @@
           WEBAPPSTUB_POSTGRES_USER = "dev";
           WEBAPPSTUB_POSTGRES_PASSWORD = "dev";
           WEBAPPSTUB_POSTGRES_HOST = "wasdev";
+          WEBAPPSTUB_POSTGRES_PORT = "5432";
           # 'open' for everyone can signup, 'closed' for no one and
           # 'invite:key' to generate invite keys
           WEBAPPSTUB_SIGNUP_MODE = "open";
@@ -45,7 +47,7 @@
           WEBAPPSTUB_AUTH_OPENID_PROVIDERS = "keycloak";
           WEBAPPSTUB_OPENID_KEYCLOAK_PROVIDER_URI = "http://wasdev:8180/realms/Webappstub";
           WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_ID = "webappstub";
-          WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_SECRET = "NOnDASN4JskXbiJUHfu2AUfJ75h9Qq1b";
+          #WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_SECRET = "<the-secret>";
       };
     in {
       formatter = pkgs.alejandra;

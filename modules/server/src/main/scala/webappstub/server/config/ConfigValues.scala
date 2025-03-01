@@ -72,8 +72,15 @@ object ConfigValues extends ConfigDecoders:
     config("POSTGRES_HOST", "localhost").as[Host],
     config("POSTGRES_PORT", "5432").as[Port],
     config("POSTGRES_DATABASE", "webappstub"),
-    config("POSTGRES_USER"),
-    config("POSTGRES_PASSWORD").redacted.as[Password],
+    config("POSTGRES_USER").option.flatMap {
+      case Some(username) =>
+        config("POSTGRES_PASSWORD").redacted
+          .as[Password]
+          .option
+          .map(p => Some(PostgresConfig.User(username, p)))
+      case None =>
+        ConfigValue.default(None)
+    },
     config("POSTGRES_DEBUG", "false").as[Boolean],
     config("POSTGRES_MAX_CONNECTIONS", "8").as[Int],
     config("POSTGRES_CONNECT_RETRY_DELAY", "10 seconds").as[FiniteDuration]

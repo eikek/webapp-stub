@@ -24,34 +24,39 @@ trait PostgresTest {
       .single[IO](
         host = cfg.host.toString,
         port = cfg.port.value,
-        user = cfg.user,
-        password = cfg.password.value.some,
+        user = cfg.user.map(_.username).getOrElse(""),
+        password = cfg.user.flatMap(_.password).map(_.value),
         database = cfg.database,
         debug = cfg.debug
       )
 
   private def fromEnv[A](key: String, f: String => Option[A] = _.some): Option[A] =
-    sys.env.get(key).flatMap(f)
+    sys.env.get(key).filter(_.nonEmpty).flatMap(f)
+
+  private def currentSystemUser =
+    sys.props.get("user.name").getOrElse("")
 
   private val initConfig = {
-    val pgHost = fromEnv("WEBAPPSTUB_POSTGRES_HOST", Host.fromString)
+    val pgHost = fromEnv("WEBAPPSTUB_TEST_POSTGRES_HOST", Host.fromString)
       .getOrElse(host"localhost")
 
-    val pgPort = fromEnv("WEBAPPSTUB_POSTGRES_PORT", Port.fromString)
+    val pgPort = fromEnv("WEBAPPSTUB_TEST_POSTGRES_PORT", Port.fromString)
       .getOrElse(port"5432")
 
-    val pgDb = fromEnv("WEBAPPSTUB_POSTGRES_DB").getOrElse("webappstub")
-    val pgUser = fromEnv("WEBAPPSTUB_POSTGRES_USER").getOrElse("dev")
-    val pgPass =
-      fromEnv("WEBAPPSTUB_POSTGRES_PASSWORD", s => Password(s).some)
-        .getOrElse(Password("dev"))
+    val pgDb = fromEnv("WEBAPPSTUB_TEST_POSTGRES_INIT_DB").getOrElse("postgres")
+    val pgUser = fromEnv("WEBAPPSTUB_TEST_POSTGRES_USER")
+      .map { user =>
+        val pw = fromEnv("WEBAPPSTUB_TEST_POSTGRES_PASSWORD", s => Password(s).some)
+        PostgresConfig.User(user, pw)
+      }
+      .orElse(Some(PostgresConfig.User(currentSystemUser, None)))
 
-    PostgresConfig(pgHost, pgPort, pgDb, pgUser, pgPass, false, 6, Duration.Zero)
+    PostgresConfig(pgHost, pgPort, pgDb, pgUser, false, 6, Duration.Zero)
   }
 
   private val initSession: Resource[IO, Session[IO]] = makeSession(initConfig)
 
-  private val randomDb =
+  private val randomDb: Resource[IO, PostgresConfig] =
     for {
       rand <- Random.scalaUtilRandom[IO].toResource
       db <- rand.nextAlphaNumeric.replicateA(9).map(c => ('d' :: c).mkString).toResource
@@ -62,7 +67,10 @@ trait PostgresTest {
             initSession
               .use(
                 _.execute(
-                  sql"""CREATE DATABASE "#$db" OWNER #${initConfig.user}""".command
+                  initConfig.user
+                    .map(u => sql"""CREATE DATABASE "#$db" OWNER #${u.username}""")
+                    .getOrElse(sql"""CREATE DATABASE "#$db"""")
+                    .command
                 )
               )
               .as(newCfg)

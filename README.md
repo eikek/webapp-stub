@@ -1,10 +1,5 @@
 # webapp stub
 
-- [ ] cache of view responses
-- [ ] better error page when openid sends error (invalid client creds
-      for example)
-
-
 This is a template repository for making starting a new Scala3 project
 a bit quicker. It provides a runnable web application, github actions
 etc.
@@ -40,8 +35,8 @@ some basic functiality that can be useful across all projcts.
 
 - basic sbt setup with the above modules, making use of the following:
   - typelevel stack: cats-effect, fs2
-  - postgresql and skunk
-  - http4s, htmx, htmx4s and scalatags
+  - postgresql and skunk for accessing postgres db
+  - http4s, htmx, htmx4s and scalatags for rendering
   - ciris for reading configuration
   - borer for json
   - scribe for logging
@@ -49,14 +44,21 @@ some basic functiality that can be useful across all projcts.
 - basic site layout with a top bar
 - user authenication with password or "auto-user" mode (then some
   pre-defined user is logged in automatically)
-- openid connect integration
+- openid connect integration using soidc library
 - user registration
 - a "version" route for getting version information
 - a http4s `AccountMiddleware` for routes requiring an existing accout
 - github actions for doing ci and release zips to github release page
 - release-drafter setup
 - nix dev and ci setup
+  - using the
+    [devshell-tools](https://github.com/eikek/devshell-tools) flake
+  - including container and vms running the external services (like
+    postgres or keycloak)
 - some unit tests using random postgres databases
+  - using the nix dev setup, postgres is started at the beginning and
+    killed at the end, it is so much faster than relying on a
+    container or vm
 
 ### Included Code Examples
 
@@ -142,10 +144,10 @@ returned immediately.
 The `flake.nix` provides a convenient development setup. It makes sure
 sbt and other tools are available. It also provides a development
 container (or vm), that makes external services available, like the
-postgresql database. When running on NixOS, the container can be used.
-If not running NixOS, it a vm can be used instead, just enter a
-different development shell with `nix develop .#vm`. This is provided
-by [devshell-tools](https://github.com/eikek/devshell-tools).
+postgresql database and keycloak. When running on NixOS, the container
+can be used. If not running NixOS, it a vm can be used instead, just
+enter a different development shell with `nix develop .#vm`. This is
+provided by [devshell-tools](https://github.com/eikek/devshell-tools).
 
 The default development shell can be entered via `nix develop`.
 
@@ -157,3 +159,19 @@ github action.
 
 Clone this repo and then use the `init.sh` script to rename to the new
 project name. It also removes `.git` folder and creates it anew.
+
+## Testing with Postgres
+
+There is a sbt plugin `DbTestsPlugin` that provides a `dbTests`
+command. This command starts a postgres server, then runs all the
+tests and finally stops it. The trait `PostgresTest` connects first to
+the `postgres` database and creates a random db used for each test.
+This is provided as a cats effect `Resource` that each test can use or
+not.
+
+
+## TODO
+
+- [ ] cache of view responses
+- [ ] better error page when openid sends error (invalid client creds
+      for example)

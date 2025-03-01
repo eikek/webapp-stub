@@ -49,9 +49,9 @@ object SkunkSession {
         Session.single(
           host = cfg.host.toString,
           port = cfg.port.value,
-          user = cfg.user,
+          user = cfg.user.map(_.username).getOrElse(""),
           database = cfg.database,
-          password = cfg.password.value.some,
+          password = cfg.user.flatMap(_.password).map(_.value),
           debug = cfg.debug
         )
       )
@@ -60,9 +60,9 @@ object SkunkSession {
         .pooled[F](
           host = cfg.host.toString,
           port = cfg.port.value,
-          user = cfg.user,
+          user = cfg.user.map(_.username).getOrElse(""),
           database = cfg.database,
-          password = cfg.password.value.some,
+          password = cfg.user.flatMap(_.password).map(_.value),
           debug = cfg.debug,
           max = cfg.maxConnections
         )
