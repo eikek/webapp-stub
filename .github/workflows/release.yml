@@ -1,0 +1,44 @@
+name: Release
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+      - name: Fetch tags
+        run: git fetch --depth=100 origin +refs/tags/*:refs/tags/*
+      - uses: cachix/install-nix-action@v27
+
+      - name: Set current version
+        id: version
+        shell: bash
+        run: |
+          nix develop .#ci --command sbt root/writeVersion
+          VERSION=$(cat target/version.txt)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+          if [ -z "${VERSION}" ]; then
+            echo "Version not set!"
+            exit 1
+          fi
+
+      - name: Create zip packages
+        run: nix develop .#ci --command sbt make-pkg
+
+      - name: Publish Release (${{ env.VERSION }})
+        uses: softprops/action-gh-release@v1
+        #if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        with:
+          files: |
+            modules/server/target/universal/webappstub-server-${{ env.VERSION }}.zip
