@@ -13,10 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.1
         with:
-          fetch-depth: 0
-      - name: Fetch tags
-        run: git fetch --depth=100 origin +refs/tags/*:refs/tags/*
-      - uses: cachix/install-nix-action@v27
+          fetch-depth: 100
+          fetch-tags: true
+
+      - name: Install nix
+        uses: cachix/install-nix-action@v27
 
       - name: Set current version
         id: version
