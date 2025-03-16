@@ -6,7 +6,7 @@ object Dependencies {
   object V {
     val scala3 = "3.6.4"
 
-    val borer = "1.15.0"
+    val borer = "1.16.0"
     val borerCompats = "0.1.0"
     val bcrypt = "0.4"
     val catsEffect = "3.5.4"
