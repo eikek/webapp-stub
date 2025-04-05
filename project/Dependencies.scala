@@ -23,7 +23,7 @@ object Dependencies {
     val fs2 = "3.12.0"
     val soidc = "0.2.0"
     val scalaCheck = "1.17.0"
-    val scribe = "3.16.0"
+    val scribe = "3.16.1"
     val skunk = "1.1.0-M3"
     val fontawesome = "6.7.2"
     val htmx4s = "0.3.0"
