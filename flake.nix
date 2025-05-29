@@ -26,6 +26,7 @@
           jq
           scala-cli
           mermaid-cli
+          metals
         ]);
 
       devEnvVars = {
