@@ -23,9 +23,7 @@ import soidc.jwt.{Uri as JwtUri, *}
 private trait ConfigDecoders:
   extension [A, B](self: ConfigDecoder[A, B])
     def emap[C](typeName: String)(f: B => Either[String, C])(using Show[B]) =
-      self.mapEither((key, b) =>
-        f(b).left.map(err => ConfigError.decode(typeName, key, b))
-      )
+      self.mapEither((key, b) => f(b).left.map(_ => ConfigError.decode(typeName, key, b)))
 
   extension [A](self: ConfigValue[Effect, List[A]])
     def listflatMap[B](f: A => ConfigValue[Effect, B]): ConfigValue[Effect, List[B]] =

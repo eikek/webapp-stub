@@ -10,7 +10,6 @@ import webappstub.server.context.AccountMiddleware.Config
 
 import org.http4s.ContextRequest
 import org.http4s.Response
-import soidc.http4s.routes.JwtContext
 
 final class AccountMiddleware[F[_]: Monad](cfg: Config[F]):
 

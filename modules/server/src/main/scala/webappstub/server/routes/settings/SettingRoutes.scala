@@ -16,7 +16,7 @@ import org.http4s.scalatags.*
 final class SettingRoutes[F[_]: Async](config: Config) extends Htmx4sDsl[F]:
 
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
-    case ContextRequest(ctx, req @ POST -> Root / "cycle-theme") =>
+    case ContextRequest(_, req @ POST -> Root / "cycle-theme") =>
       val settings = Settings.fromRequest(req)
       val baseUrl = ClientRequestInfo.getBaseUrl(config, req)
       val next = UiTheme.cycle(settings.theme)
@@ -24,7 +24,7 @@ final class SettingRoutes[F[_]: Async](config: Config) extends Htmx4sDsl[F]:
         _.addCookie(WebappstubTheme(next).asCookie(baseUrl)).putHeaders(HxRefresh(true))
       )
 
-    case ContextRequest(ctx, req @ POST -> Root / "language") =>
+    case ContextRequest(_, req @ POST -> Root / "language") =>
       for
         in <- req.as[Model.SettingsForm]
         baseUrl = ClientRequestInfo.getBaseUrl(config, req)
@@ -39,11 +39,11 @@ final class SettingRoutes[F[_]: Async](config: Config) extends Htmx4sDsl[F]:
           }
       yield resp
 
-    case ContextRequest(ctx, req @ GET -> Root / "language" :? Params.MenuOpen(flag)) =>
+    case ContextRequest(_, req @ GET -> Root / "language" :? Params.MenuOpen(flag)) =>
       val settings = Settings.fromRequest(req)
       Ok(Views.languageDropdown(settings.language, flag))
 
-    case ContextRequest(ctx, req @ POST -> Root) =>
+    case ContextRequest(_, req @ POST -> Root) =>
       val settings = Settings.fromRequest(req)
       for
         in <- req.as[Model.SettingsForm]

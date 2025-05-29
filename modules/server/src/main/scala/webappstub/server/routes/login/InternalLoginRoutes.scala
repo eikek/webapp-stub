@@ -80,7 +80,7 @@ final class InternalLoginRoutes[F[_]: Async](
             }
         }
 
-    case ContextRequest(ctx, req @ POST -> Root) =>
+    case ContextRequest(_, req @ POST -> Root) =>
       for
         in <- req.as[Model.UserPasswordForm]
         result <- in.toModel match {

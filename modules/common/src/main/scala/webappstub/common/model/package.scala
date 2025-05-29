@@ -22,7 +22,7 @@ package object model {
           self.claims.subject
             .flatMap(_.value.toLongOption)
             .map(n => AccountKey.Internal(AccountId(n)))
-        case Some(p) =>
+        case Some(_) =>
           ExternalAccountId.fromToken(self).map(AccountKey.External(_))
         case None => None
 

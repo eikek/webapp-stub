@@ -23,7 +23,6 @@ import soidc.core.OidParameterNames
 import soidc.core.model.TokenResponse
 import soidc.http4s.client.ByteEntityDecoder
 import soidc.http4s.routes.AuthCodeFlow
-import soidc.http4s.routes.AuthCodeFlow.Result.Success
 import soidc.http4s.routes.GitHubFlow
 import soidc.jwt.JWSDecoded
 import soidc.jwt.JoseHeader
@@ -112,7 +111,7 @@ final class OpenIdLoginRoutes[F[_]: Async](
                       }
 
                     case result =>
-                      UnprocessableEntity(View.signupResult(settings, result))
+                      UnprocessableEntity(View.signupResult(result))
                   }
               )
           yield resp
@@ -127,7 +126,7 @@ final class OpenIdLoginRoutes[F[_]: Async](
       .semiflatMap { flow =>
         flow.run(req, baseUrl / name) {
           case Left(err) => Forbidden(View.loginFailed(err.toString()))
-          case Right(GitHubFlow.Result.Success(user, resp)) =>
+          case Right(GitHubFlow.Result.Success(user, _)) =>
             val username = user.login.orEmpty
             val accountId = ExternalAccountId(Provider.github, user.id.toString())
             backend.login.loginExternal(accountId).flatMap {

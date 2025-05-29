@@ -1,7 +1,6 @@
 package webappstub.server.routes.invite
 
 import cats.data.Validated
-import cats.syntax.all.*
 
 import htmx4s.http4s.util.ValidationErrors
 

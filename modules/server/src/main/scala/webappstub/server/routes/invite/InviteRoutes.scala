@@ -24,7 +24,7 @@ final class InviteRoutes[F[_]: Async](signup: SignupService[F]) extends Htmx4sDs
         )
       )
 
-    case ContextRequest(ctx, req @ POST -> Root) =>
+    case ContextRequest(_, req @ POST -> Root) =>
       val settings = Settings.fromRequest(req)
       for
         in <- req.as[Model.CreateInviteForm]
