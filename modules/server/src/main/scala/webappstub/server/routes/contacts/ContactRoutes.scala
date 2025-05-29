@@ -120,7 +120,7 @@ final class ContactRoutes[F[_]: Async](api: RoutesApi[F]) extends Htmx4sDsl[F]:
           resp <- Ok(views.contactListPage(ctx, ContactListPage(all, None, 1)))
         } yield resp
 
-      case ContextRequest(ctx, req @ DELETE -> Root / Params.ContactId(id)) =>
+      case ContextRequest(_, req @ DELETE -> Root / Params.ContactId(id)) =>
         val settings = Settings.fromRequest(req)
         val notFoundPage = Layout.notFoundPage(settings.theme)
         for {

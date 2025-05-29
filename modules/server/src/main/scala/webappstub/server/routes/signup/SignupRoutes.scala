@@ -24,7 +24,7 @@ final class SignupRoutes[F[_]: Async](
   val signupCfg = config.backend.signup
 
   def routes = AuthedRoutes.of[MaybeAuthenticated, F] {
-    case ContextRequest(ctx, req @ GET -> Root) =>
+    case ContextRequest(_, req @ GET -> Root) =>
       val settings = Settings.fromRequest(req)
       Ok(
         Layout("Signup", settings.theme)(
@@ -32,7 +32,7 @@ final class SignupRoutes[F[_]: Async](
         )
       )
 
-    case ContextRequest(ctx, req @ POST -> Root) =>
+    case ContextRequest(_, req @ POST -> Root) =>
       val settings = Settings.fromRequest(req)
       for
         in <- req.as[Model.SignupForm]
@@ -44,7 +44,7 @@ final class SignupRoutes[F[_]: Async](
                 NoContent()
                   .map(_.putHeaders(HxLocation(HxLocation.Value.Path(uri"/app/login"))))
               case result =>
-                UnprocessableEntity(View.signupResult(settings, result))
+                UnprocessableEntity(View.signupResult(result))
             }
         )
       yield resp

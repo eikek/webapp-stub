@@ -162,7 +162,7 @@ object View extends Components:
       )
     )
 
-  def signupResult(ctx: Settings, result: SignupResult) =
+  def signupResult(result: SignupResult) =
     div(
       cls := s"mt-2 ${Styles.errorMessage}",
       result match
