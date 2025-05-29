@@ -14,9 +14,9 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
       ciPkgs = with pkgs; [
-        devshell-tools.packages.${system}.sbt17
+        devshell-tools.packages.${system}.sbt21
         devshell-tools.packages.${system}.postgres-fg
-        jdk17
+        jdk21
         tailwindcss
         terser
       ];
