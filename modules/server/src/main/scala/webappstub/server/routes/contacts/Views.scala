@@ -265,7 +265,7 @@ final class Views(theme: UiTheme):
       tbody(
         contacts.map(c =>
           tr(
-            cls := "py-2 border-b border-grey-100 dark:border-slate-700 hover:bg-grey-50 dark:hover:bg-slate-700 hover:bg-opacity-25",
+            cls := "py-2 border-b border-grey-100 dark:border-slate-700 hover:bg-grey-50/25 dark:hover:bg-slate-700/25",
             hxOn"mouseenter" := "C.moveClass(event, '.actions', 'invisible', 'visible')",
             hxOn"mouseleave" := "C.moveClass(event, '.actions', 'visible', 'invisible')",
             td(

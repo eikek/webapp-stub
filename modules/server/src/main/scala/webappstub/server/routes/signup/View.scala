@@ -24,7 +24,7 @@ object View extends Components:
   ): TypedTag[String] =
     div(
       attr.id := Id.signupForm,
-      cls := s"md:h-screen-12 flex flex-col items-center justify-center items-center w-full ${Styles.content}",
+      cls := s"h-dvh flex flex-col items-center justify-center items-center w-full ${Styles.content}",
       attr.hxExt := "response-targets",
       div(
         cls := s"flex flex-col px-2 sm:px-4 py-4 rounded-md min-w-full md:min-w-0 md:w-96 ${Styles.boxMd}",

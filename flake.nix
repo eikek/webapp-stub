@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     devshell-tools.url = "github:eikek/devshell-tools";
     flake-utils.url = "github:numtide/flake-utils";
   };
@@ -17,7 +17,7 @@
         devshell-tools.packages.${system}.sbt21
         devshell-tools.packages.${system}.postgres-fg
         jdk21
-        tailwindcss
+        tailwindcss_4
         terser
       ];
       devshellPkgs =
@@ -45,9 +45,9 @@
           WEBAPPSTUB_LOGGING_MIN_LEVEL = "Debug";
           WEBAPPSTUB_SERVER_SECRET = "hex:caffee";
 
-          WEBAPPSTUB_AUTH_OPENID_PROVIDERS = "keycloak";
-          WEBAPPSTUB_OPENID_KEYCLOAK_PROVIDER_URI = "http://wasdev:8180/realms/Webappstub";
-          WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_ID = "webappstub";
+          #WEBAPPSTUB_AUTH_OPENID_PROVIDERS = "keycloak";
+          #WEBAPPSTUB_OPENID_KEYCLOAK_PROVIDER_URI = "http://wasdev:8180/realms/Webappstub";
+          #WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_ID = "webappstub";
           #WEBAPPSTUB_OPENID_KEYCLOAK_CLIENT_SECRET = "<the-secret>";
       };
     in {
