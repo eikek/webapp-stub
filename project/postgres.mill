@@ -1,0 +1,68 @@
+package build.project
+
+import mill._, scalalib._
+import mill.api.Logger
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
+import scala.util.Try
+
+object PgWorkerModule extends mill.define.ExternalModule {
+  lazy val millDiscover = mill.define.Discover[this.type]
+  private def worker = Task.Worker(new Postgres(Task.dest, Task.log))
+  def startDb() = Task.Command {
+    worker().start()
+  }
+  def stopDb() = Task.Command {
+    worker().stop()
+  }
+}
+
+final class Postgres(dir: os.Path, logger: Logger) extends AutoCloseable {
+  private val process: AtomicReference[os.SubProcess] = new AtomicReference(null)
+  private val counter: AtomicInteger = new AtomicInteger(0)
+
+  def start(): Unit = synchronized {
+    counter.incrementAndGet
+    Option(process.get()) match {
+      case None =>
+        logger.info(s"Starting postgres in $dir")
+        val p = os.proc("postgres-fg", dir).spawn()
+        process.set(p)
+        waitForPostgres()
+      case Some(_) =>
+        logger.info(s"Postgres already running in $dir")
+    }
+  }
+
+  def waitForPostgres(tries: Int = 0): Unit = {
+    if (tries >= 50) {
+      sys.error("Cannot connect to postgres. Giving up")
+    }
+    Thread.sleep(100)
+    val rc = os
+      .proc("pg_isready", "-d", "postgres", "-h", "localhost", "-p", "5432")
+      .call(check = false)
+    if (rc.exitCode == 0) ()
+    else {
+      logger.info("Waiting for postgres to come up…")
+      waitForPostgres(tries + 1)
+    }
+  }
+
+  def close(): Unit = stop()
+
+  def stop(): Unit = synchronized {
+    Option(process.get()) match {
+      case Some(p) =>
+        val c = counter.accumulateAndGet(1, (c, g) => if (c > 0) c - 1 else c)
+        if (c == 0) {
+          logger.info(s"Shutting down postgres in $dir")
+          p.destroy(shutdownGracePeriod = 500)
+          process.set(null)
+        } else {
+          logger.info(s"Not yet shutting down in $dir: counter=$c")
+        }
+      case None =>
+        logger.info(s"Postgres not running, no shutdown needed. $dir")
+    }
+  }
+}

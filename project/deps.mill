@@ -1,0 +1,87 @@
+package build.project
+
+import mill._, scalalib._
+
+object Deps {
+  val scalaVersion = "3.7.1"
+  val fs2 = Agg(
+    ivy"co.fs2::fs2-core:3.12.0",
+    ivy"co.fs2::fs2-io:3.12.0"
+  )
+  val soidcJwt = Agg(
+    ivy"com.github.eikek::soidc-borer:0.2.0",
+    ivy"com.github.eikek::soidc-jwt:0.2.0"
+  )
+  val soidcCore = Agg(
+    ivy"com.github.eikek::soidc-core:0.2.0",
+    ivy"com.github.eikek::soidc-http4s-client:0.2.0"
+  )
+  val soidcHttp4s = Agg(
+    ivy"com.github.eikek::soidc-http4s-routes:0.2.0"
+  )
+  val borer = Agg(
+    ivy"io.bullet::borer-compat-cats:1.16.1",
+    ivy"io.bullet::borer-core:1.16.1",
+    ivy"io.bullet::borer-derivation:1.16.1"
+  )
+  val scribe = Agg(
+    ivy"com.outr::scribe-cats:3.16.1",
+    ivy"com.outr::scribe:3.16.1",
+    ivy"com.outr::scribe-slf4j:3.16.1"
+  )
+  val skunk = Agg(
+    ivy"org.tpolecat::skunk-core:1.1.0-M3"
+  )
+  val munit = Agg(
+    ivy"org.scalameta::munit-scalacheck:1.1.0",
+    ivy"org.scalameta::munit:1.1.1",
+    ivy"org.typelevel::munit-cats-effect:2.1.0"
+  )
+  val http4sClient = Agg(
+    ivy"org.http4s::http4s-client:0.23.30",
+    ivy"org.http4s::http4s-ember-client:0.23.30"
+  )
+  val http4sServer = Agg(
+    ivy"org.http4s::http4s-dsl:0.23.30",
+    ivy"org.http4s::http4s-ember-server:0.23.30",
+    ivy"org.http4s::http4s-scalatags:0.25.2"
+  )
+  val bcrypt = Agg(ivy"org.mindrot:jbcrypt:0.4")
+
+  val htmx4s = Agg(
+    ivy"com.github.eikek::htmx4s-constants:0.3.0",
+    ivy"com.github.eikek::htmx4s-http4s:0.3.0",
+    ivy"com.github.eikek::htmx4s-scalatags:0.3.0"
+  )
+  val ciris = Agg(
+    ivy"is.cir::ciris:3.9.0"
+  )
+  val webjars = Agg(
+    ivy"org.webjars.npm:flag-icons:7.5.0;exclude=org.webjars.npm:*",
+    ivy"org.webjars.npm:fortawesome__fontawesome-free:6.7.2;exclude=org.webjars.npm:*",
+    ivy"org.webjars.npm:htmx-ext-response-targets:2.0.3;exclude=org.webjars.npm:*",
+    ivy"org.webjars.npm:htmx.org:2.0.5;exclude=org.webjars.npm:*"
+  )
+
+  /** A scala source file referencing all webjar dependencies. */
+  def webjarSource: String = {
+    val invalidChars = "-.".toSet
+    val fields = webjars
+      .map { m =>
+        val name = m.dep.module.name.value
+        val version = m.dep.versionConstraint.asString
+        s"""  val ${name.toLowerCase
+            .filterNot(
+              invalidChars.contains
+            )} = Artifact("${name}", "${version}")"""
+      }
+      .mkString("\n\n")
+    s"""package webappstub.server.routes
+       |object Webjars {
+       |  case class Artifact(name: String, version: String)
+       |
+       |$fields
+       |}
+       |""".stripMargin
+  }
+}

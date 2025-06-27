@@ -1,0 +1,131 @@
+package build.project
+
+import $ivy.`com.goyeau::mill-scalafix::0.5.1`
+import com.goyeau.mill.scalafix.StyleModule
+import mill._, scalalib._
+import $file.project.deps.Deps
+import $file.project.postgres.{PgWorkerModule, Postgres}
+import mill.resolve.Resolve
+import mill.define.SelectMode
+import mill.eval.Evaluator
+
+trait WebappstubModule extends ScalaModule with StyleModule {
+  def scalaVersion = Deps.scalaVersion
+  def scalacOptions = super.scalacOptions() ++ Seq(
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-encoding",
+    "UTF-8",
+    "-language:higherKinds",
+    "-Xkind-projector:underscores",
+    "-Werror",
+    "-Wunused:all",
+    "-indent",
+    "-print-lines"
+  )
+  def consoleScalacOptions = scalacOptions().filterNot(_ == "-Werror")
+
+  def millSourcePath = {
+    val pre = super.millSourcePath
+    pre / os.up / "modules" / pre.last
+  }
+
+  def ivyDeps = Deps.scribe
+
+  object test extends ScalaTests with TestModule.Munit {
+    def ivyDeps = Deps.munit
+  }
+}
+
+object Tasks {
+  def find(ev: Evaluator, cmd: String) =
+    Resolve.Tasks
+      .resolve(
+        ev.rootModule,
+        Seq(s"__.$cmd"),
+        SelectMode.Separated
+      )
+      .fold(sys.error, identity)
+}
+
+trait PgTestModule extends mill.define.Module {
+  def dbTests(ev: Evaluator): Command[Unit] = {
+    val tests = Tasks.find(ev, "test")
+    val seq = Seq(PgWorkerModule.startDb(), Task.sequence(tests))
+    Task.Command(exclusive = true) {
+      Task.sequence(seq)()
+      ()
+    }
+  }
+
+  def dbStop() = Task.Command {
+    PgWorkerModule.stopDb()()
+  }
+}
+
+trait CiModule extends PgTestModule {
+  def ci(ev: Evaluator) = {
+    val checkStyles = Tasks.find(ev, "checkStyle")
+    val makePkg = Tasks.find(ev, "universalPackageZip")
+    Task.Command(exclusive = true) {
+      Task.sequence(checkStyles ++ (dbTests(ev) +: makePkg))()
+      ()
+    }
+  }
+}
+
+trait TailwindModule extends Module {
+
+  def tailwindInput = Task.Source(moduleDir / "webapp" / "css" / "index.css")
+  def tailwindConfig = Task.Source(moduleDir / "webapp" / "css" / "tailwind.config.js")
+
+  def artifactName: T[String]
+
+  def tailwindCssPath: T[String] = Task.Input {
+    Task.env.getOrElse("TAILWINDCSS_PATH", "tailwindcss").toString
+  }
+
+  def tailwindCss: T[Seq[PathRef]] = Task.Sources {
+    val outDir = Task.dest / "META-INF" / "resources" / "webjars" / artifactName()
+    os.makeDir.all(outDir)
+    val css = tailwindInput().path
+    val tw = tailwindConfig().path
+    val out = outDir / "index.css"
+    Task.log.info("Creating css stylesheets with tailwindcss")
+    os.proc(tailwindCssPath(), "-m", "-i", css, "-c", tw, "-o", out).call(cwd = moduleDir)
+    Seq(PathRef(Task.dest))
+  }
+}
+
+trait JavascriptModule extends Module {
+  def artifactName: T[String]
+
+  def jsSources = Task.Source(moduleDir / "webapp" / "js")
+  def terserPath: T[String] = Task.Input {
+    Task.env.getOrElse("TERSER_PATH", "terser").toString
+  }
+
+  def javascript: T[Seq[PathRef]] = Task.Sources {
+    val outDir = Task.dest / "META-INF" / "resources" / "webjars" / artifactName()
+    os.makeDir.all(outDir)
+
+    Task.log.info("Copying js files…")
+    val js = jsSources().path
+    os.list(js).map(os.copy.matching { case p if p.ext == "js" => outDir / p.last })
+
+    Task.log.info("Running terser to minify js files…")
+    val inJs = os.list(outDir)
+    os.proc(
+      terserPath(),
+      "--compress",
+      "--mangle",
+      "-o",
+      outDir / "all.min.js",
+      "--",
+      inJs
+    ).call(cwd = moduleDir)
+
+    Seq(PathRef(Task.dest))
+  }
+}

@@ -9,7 +9,7 @@ object WebjarDef:
 
   val webjars = Seq(
     // refers to our own js and css stuff, version is not needed
-    Webjar("self")("webappstub-server", "", ""),
+    Webjar("self")("server", "", ""),
     makeWebjar("htmx", Webjars.htmxorg, "dist"),
     makeWebjar("htmx-rt", Webjars.htmxextresponsetargets),
     makeWebjar("fa", Webjars.fortawesome__fontawesomefree),

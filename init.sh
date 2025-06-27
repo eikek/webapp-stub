@@ -32,7 +32,9 @@ for f in $(find modules -type f -iname "*webappstub*"); do
     target="$(dirname "$f")/$target_name"
     if [ "$f" != "$target" ]; then
         echo "Move $f -> $target"
-        mv "$f" "$target"
+        if [ $dry_run -eq 0 ]; then
+            mv "$f" "$target"
+        fi
     fi
 done
 
@@ -46,10 +48,13 @@ for f in $(find modules -type f -name "*.scala"); do
     fi
 done
 
-echo "Fix build.sbt"
-if [ $dry_run -eq 0 ]; then
-    sed -i -e "s/webappstub/$new_name/g" build.sbt
-fi
+echo "Fix build.mill"
+for f in $(find . -type f -name "*.mill" -not -path "./out/*"); do
+    echo "Fix $f"
+    if [ $dry_run -eq 0 ]; then
+        sed -i -e "s/webappstub/$new_name/g" "$f"
+    fi
+done
 
 echo "Fix scalafix.conf"
 if [ $dry_run -eq 0 ]; then
@@ -67,22 +72,24 @@ if [ $dry_run -eq 0 ]; then
     sed -i -e "s/WEBAPPSTUB/$new_name_caps/g" flake.nix
 fi
 
-read -p "Re-initialize git? (y/n) " reinit_git
-if [ "$reinit_git" == "y" ]; then
-    if [ -z "$user_name" ]; then
-        read -p "Your git name: " user_name
-    fi
-    if [ -z "$user_email" ]; then
-        read -p "Your git email: " user_email
-    fi
-    echo "Setup git for $user_name <$user_email>"
+if [ $dry_run -eq 0 ]; then
+    read -p "Re-initialize git? (y/n) " reinit_git
+    if [ "$reinit_git" == "y" ]; then
+        if [ -z "$user_name" ]; then
+            read -p "Your git name: " user_name
+        fi
+        if [ -z "$user_email" ]; then
+            read -p "Your git email: " user_email
+        fi
+        echo "Setup git for $user_name <$user_email>"
 
-    rm -rf .git/
-    git init
-    git branch -M main
-    git config user.name "$user_name"
-    git config user.email "$user_email"
-    git add .
-    git rm --cached init.sh
-    git commit -am 'hello world'
+        rm -rf .git/
+        git init
+        git branch -M main
+        git config user.name "$user_name"
+        git config user.email "$user_email"
+        git add .
+        git rm --cached init.sh
+        git commit -am 'hello world'
+    fi
 fi
