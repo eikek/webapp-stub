@@ -1,0 +1,67 @@
+package build
+
+import $ivy.`io.github.hoangmaihuy::mill-universal-packager::0.1.4`
+import $packages._
+import $file.project.deps.Deps
+import $file.project.module.{CiModule, JavascriptModule, TailwindModule, WebappstubModule}
+import io.github.hoangmaihuy.mill.packager.archetypes.JavaAppPackagingModule
+import mill._, scalalib._
+
+object `package` extends RootModule with CiModule { outer =>
+  val appVersion = "0.1.0"
+
+  def writeVersion() = Task.Command {
+    val file = Task.dest / "version.txt"
+    os.write(file, appVersion)
+    Task.log.info(s"Version written to: $file")
+  }
+
+  def `make-pkg`() = Task.Command {
+    server.universalPackageZip()
+  }
+
+  object common extends WebappstubModule {
+    def ivyDeps = super.ivyDeps() ++ Deps.fs2 ++ Deps.soidcJwt ++ Deps.borer
+  }
+
+  object store extends WebappstubModule {
+    def moduleDeps = Seq(common)
+    def ivyDeps = super.ivyDeps() ++ Deps.skunk ++ Deps.fs2
+  }
+
+  object backend extends WebappstubModule {
+    def moduleDeps = Seq(common, store)
+    def ivyDeps = super.ivyDeps() ++
+      Deps.bcrypt ++
+      Deps.soidcJwt ++
+      Deps.soidcCore ++
+      Deps.http4sClient
+  }
+
+  object server
+      extends WebappstubModule
+      with TailwindModule
+      with JavascriptModule
+      with JavaAppPackagingModule {
+    def packageVersion = outer.appVersion
+    def packageName = s"webappstub-server-${packageVersion()}"
+    def executableScriptName = "webapp-stub"
+    def moduleDeps = Seq(common, backend)
+    def ivyDeps = super.ivyDeps() ++
+      Deps.http4sServer ++
+      Deps.htmx4s ++
+      Deps.ciris ++
+      Deps.soidcHttp4s ++
+      Deps.webjars
+
+    def generatedSources: T[Seq[PathRef]] = Task {
+      val target = Task.dest / "Webjars.scala"
+      os.write(target, Deps.webjarSource)
+      Seq(PathRef(Task.dest))
+    }
+
+    def resources: T[Seq[PathRef]] = Task.Sources {
+      super.resources() ++ tailwindCss() ++ javascript()
+    }
+  }
+}

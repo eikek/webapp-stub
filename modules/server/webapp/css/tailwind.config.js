@@ -3,8 +3,8 @@
 const colors = require('tailwindcss/colors')
 
 export default {
-    content: [ "modules/server/src/main/scala/**/*.scala",
-               "modules/server/src/main/css/keep.txt",
+    content: [ "src/**/*.scala",
+               "webapp/css/keep.txt",
              ],
     darkMode: 'class',
     theme: {

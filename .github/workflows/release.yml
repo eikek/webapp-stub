@@ -23,8 +23,8 @@ jobs:
         id: version
         shell: bash
         run: |
-          nix develop .#ci --command sbt root/writeVersion
-          VERSION=$(cat target/version.txt)
+          nix develop .#ci --command mill writeVersion
+          VERSION=$(cat out/writeVersion.dest/version.txt)
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
           if [ -z "${VERSION}" ]; then
@@ -33,7 +33,7 @@ jobs:
           fi
 
       - name: Create zip packages
-        run: nix develop .#ci --command sbt make-pkg
+        run: nix develop .#ci --command mill make-pkg
 
       - name: Publish Release (${{ env.VERSION }})
         uses: softprops/action-gh-release@v1
@@ -42,4 +42,4 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           files: |
-            modules/server/target/universal/webappstub-server-${{ env.VERSION }}.zip
+            out/server/universalPackageZip.dest/webappstub-server-${{ env.VERSION }}.zip
