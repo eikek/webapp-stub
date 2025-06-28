@@ -33,7 +33,7 @@ The favicon example is from [favicon.io](https://favicon.io).
 It is usually a bit easier to remove things, so this stub implements
 some basic functiality that can be useful across all projcts.
 
-- basic sbt setup with the above modules, making use of the following:
+- basic mill setup with the above modules, making use of the following:
   - typelevel stack: cats-effect, fs2
   - postgresql and skunk for accessing postgres db
   - http4s, htmx, htmx4s and scalatags for rendering
@@ -142,7 +142,7 @@ returned immediately.
 ## Nix
 
 The `flake.nix` provides a convenient development setup. It makes sure
-sbt and other tools are available. It also provides a development
+mill and other tools are available. It also provides a development
 container (or vm), that makes external services available, like the
 postgresql database and keycloak. When running on NixOS, the container
 can be used. If not running NixOS, it a vm can be used instead, just
@@ -162,12 +162,11 @@ project name. It also removes `.git` folder and creates it anew.
 
 ## Testing with Postgres
 
-There is a sbt plugin `DbTestsPlugin` that provides a `dbTests`
-command. This command starts a postgres server, then runs all the
-tests and finally stops it. The trait `PostgresTest` connects first to
-the `postgres` database and creates a random db used for each test.
-This is provided as a cats effect `Resource` that each test can use or
-not.
+There is a mill `dbTests` command. This command starts a postgres
+server, then runs all the tests and finally stops it. The trait
+`PostgresTest` connects first to the `postgres` database and creates a
+random db used for each test. This is provided as a cats effect
+`Resource` that each test can use or not.
 
 
 ## TODO

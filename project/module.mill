@@ -129,3 +129,21 @@ trait JavascriptModule extends Module {
     Seq(PathRef(Task.dest))
   }
 }
+
+trait WebjarFiles extends Module {
+  def artifactName: T[String]
+
+  def webjarSources = Task.Source(moduleDir / "webapp" / "webjar")
+
+  def webjarFiles: T[Seq[PathRef]] = Task.Sources {
+    val outDir = Task.dest / "META-INF" / "resources" / "webjars" / artifactName()
+    os.makeDir.all(outDir)
+
+    Task.log.info("Copying webjar files…")
+    val files = webjarSources()
+    os.list(files.path).map(os.copy.matching { case p =>
+      outDir / p.last
+    })
+    Seq(PathRef(Task.dest))
+  }
+}
