@@ -4,7 +4,7 @@ import $ivy.`io.github.hoangmaihuy::mill-universal-packager::0.1.4`
 import $ivy.`com.goyeau::mill-git::0.2.7`
 import $packages._
 import $file.project.deps.Deps
-import $file.project.module.{CiModule, JavascriptModule, TailwindModule, WebappstubModule}
+import $file.project.module.{CiModule, JavascriptModule, TailwindModule, WebappstubModule, WebjarFiles}
 import io.github.hoangmaihuy.mill.packager.archetypes.JavaAppPackagingModule
 import com.goyeau.mill.git.GitVersionModule
 import mill._, scalalib._
@@ -45,6 +45,7 @@ object `package` extends RootModule with CiModule { outer =>
   object server
       extends WebappstubModule
       with TailwindModule
+      with WebjarFiles
       with JavascriptModule
       with JavaAppPackagingModule {
     def packageVersion = outer.appVersion()
@@ -65,7 +66,7 @@ object `package` extends RootModule with CiModule { outer =>
     }
 
     def resources: T[Seq[PathRef]] = Task.Sources {
-      super.resources() ++ tailwindCss() ++ javascript()
+      super.resources() ++ tailwindCss() ++ javascript() ++ webjarFiles()
     }
   }
 }
