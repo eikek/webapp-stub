@@ -12,7 +12,7 @@ object Views extends Components:
 
   def themeButton(selected: UiTheme): TypedTag[String] =
     a(
-      cls := s"py-2 px-4 inline-flex items-center rounded-lg ${Styles.basicBtnHover} ${Styles.borderBtn} ${Styles.focusRingBtn} ${Styles.basicBtnBg} text-xl",
+      cls := s"py-2 px-4 inline-flex items-center rounded-lg ${Styles.plainBtn} text-xl",
       attr.title := s"Switch to ${UiTheme.cycle(selected).name}",
       i(cls := selected.fold("fa fa-moon", "fa fa-sun")),
       attr.hxPost := "/app/settings/cycle-theme"
@@ -25,7 +25,7 @@ object Views extends Components:
       cls := s"relative dark:bg-stone-800 bg-white",
       attr.id := "language-dropdown",
       a(
-        cls := s"py-2 pl-2 pr-5 rounded-lg inline-flex items-center ${Styles.borderBtn} ${Styles.focusRingBtn} ${Styles.basicBtnBg} ${Styles.basicBtnHover} text-sm",
+        cls := s"py-2 pl-2 pr-5 rounded-lg inline-flex items-center ${Styles.plainBtn} text-sm",
         attr.hxGet := s"/app/settings/language?$qopen",
         attr.hxTarget := "#language-dropdown",
         span(cls := "mr-2", languageFlag(selected)),
@@ -41,7 +41,7 @@ object Views extends Components:
           a(
             attr.hxPost := "/app/settings/language",
             attr.hxVals := Json.encode(Map("language" -> lang.iso3)).toUtf8String,
-            cls := s"px-1 py-1 flex ${Styles.basicBtnHover}",
+            cls := s"px-1 py-1 flex ${Styles.plainBtnHover} cursor-pointer",
             span(cls := "mr-2", languageFlag(lang)),
             span(cls := "mr-2", lang.label)
           )
