@@ -253,7 +253,7 @@ final class Views(theme: UiTheme):
       cls := "w-full table-auto border-collapse",
       thead(
         tr(
-          cls := "py-4 bg-grey-100 dark:bg-slate-700 border-b border-grey-100 dark:border-slate-700",
+          cls := "py-4 bg-gray-100 dark:bg-slate-700 border-b border-gray-100 dark:border-slate-700",
           th(),
           th(cls := "text-center", "Id"),
           th(cls := "text-left", "Name"),
@@ -265,7 +265,7 @@ final class Views(theme: UiTheme):
       tbody(
         contacts.map(c =>
           tr(
-            cls := "py-2 border-b border-grey-100 dark:border-slate-700 hover:bg-grey-50/25 dark:hover:bg-slate-700/25",
+            cls := "py-2 border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50/25 dark:hover:bg-slate-700/25",
             hxOn"mouseenter" := "C.moveClass(event, '.actions', 'invisible', 'visible')",
             hxOn"mouseleave" := "C.moveClass(event, '.actions', 'visible', 'invisible')",
             td(

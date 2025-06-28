@@ -87,13 +87,19 @@ object View extends Components:
               texts.loginButton
             )
           ),
+          cfg.openIdRealms.headOption.map(_ =>
+            div(cls := s"border-t ${Styles.borderColor}")
+          ),
           div(
-            cls := "mt-2 border border-1",
+            cls := "mt-2 flex flex-col",
             cfg.openIdRealms.map { name =>
               a(
                 cls := Styles.basicBtn,
                 attr.href := s"/app/login/openid/$name",
-                name
+                span(
+                  i(cls := "fa-brands fa-openid mr-2"),
+                  name
+                )
               )
             }
           )
