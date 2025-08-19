@@ -1,9 +1,8 @@
-package webappstub.backend
+package webappstub.backend.auth
 
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.backend.auth.*
 import webappstub.common.model.*
 import webappstub.store.AccountRepo
 

@@ -3,8 +3,7 @@ package webappstub.server.routes.signup
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.backend.SignupService
-import webappstub.backend.signup.SignupResult
+import webappstub.backend.signup.{SignupResult, SignupService}
 import webappstub.server.Config
 import webappstub.server.context.*
 import webappstub.server.routes.{Layout, UiConfig}

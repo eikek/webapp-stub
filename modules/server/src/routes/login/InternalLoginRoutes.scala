@@ -5,7 +5,6 @@ import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.backend.auth.*
-import webappstub.backend.{ConfiguredRealms, LoginService}
 import webappstub.common.model.*
 import webappstub.server.Config
 import webappstub.server.common.*

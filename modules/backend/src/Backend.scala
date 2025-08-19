@@ -4,6 +4,8 @@ import cats.effect.*
 import cats.effect.std.Console
 import fs2.io.net.Network
 
+import webappstub.backend.auth.{ConfiguredRealms, LoginService}
+import webappstub.backend.signup.SignupService
 import webappstub.store.*
 import webappstub.store.migration.*
 import webappstub.store.postgres.*

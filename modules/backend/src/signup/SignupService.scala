@@ -1,11 +1,10 @@
-package webappstub.backend
+package webappstub.backend.signup
 
 import cats.Applicative
 import cats.effect.*
 import cats.syntax.all.*
 
 import webappstub.backend.auth.PasswordCrypt
-import webappstub.backend.signup.*
 import webappstub.common.model.*
 import webappstub.store.AccountRepo
 

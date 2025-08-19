@@ -1,22 +1,21 @@
+//| mill-version: 1.0.3
+//| mvnDeps:
+//| - io.github.hoangmaihuy::mill-universal-packager::0.2.0
+//| - com.goyeau::mill-scalafix::0.6.0
+//| - org.eclipse.jgit:org.eclipse.jgit:7.1.0.202411261347-r
 package build
 
-import $ivy.`io.github.hoangmaihuy::mill-universal-packager::0.1.4`
-import $ivy.`com.goyeau::mill-git::0.2.7`
-import $packages._
-import $file.project.deps.Deps
-import $file.project.module.{CiModule, JavascriptModule, TailwindModule, WebappstubModule, WebjarFiles}
+import build.project.Deps
+import build.project.{CiModule, JavascriptModule, TailwindModule, WebappstubModule, WebjarFiles, Version}
 import io.github.hoangmaihuy.mill.packager.archetypes.JavaAppPackagingModule
-import com.goyeau.mill.git.GitVersionModule
 import mill._, scalalib._
 
-object `package` extends RootModule with CiModule { outer =>
-  def appVersion() = Task.Command {
-    GitVersionModule.version(hashLength = 8)()
-  }
+object `package` extends Module with CiModule { outer =>
+  def appVersion = Task.Input(Version.get)
 
   def writeVersion() = Task.Command {
     val file = Task.dest / "version.txt"
-    os.write(file, appVersion()())
+    os.write(file, appVersion())
     Task.log.info(s"Version written to: $file")
   }
 
@@ -25,17 +24,17 @@ object `package` extends RootModule with CiModule { outer =>
   }
 
   object common extends WebappstubModule {
-    def ivyDeps = super.ivyDeps() ++ Deps.fs2 ++ Deps.soidcJwt ++ Deps.borer
+    def mvnDeps = super.mvnDeps() ++ Deps.fs2 ++ Deps.soidcJwt ++ Deps.borer
   }
 
   object store extends WebappstubModule {
     def moduleDeps = Seq(common)
-    def ivyDeps = super.ivyDeps() ++ Deps.skunk ++ Deps.fs2
+    def mvnDeps = super.mvnDeps() ++ Deps.skunk ++ Deps.fs2
   }
 
   object backend extends WebappstubModule {
     def moduleDeps = Seq(common, store)
-    def ivyDeps = super.ivyDeps() ++
+    def mvnDeps = super.mvnDeps() ++
       Deps.bcrypt ++
       Deps.soidcJwt ++
       Deps.soidcCore ++
@@ -52,7 +51,7 @@ object `package` extends RootModule with CiModule { outer =>
     def packageName = s"webappstub-server-${packageVersion()}"
     def executableScriptName = "webapp-stub"
     def moduleDeps = Seq(common, backend)
-    def ivyDeps = super.ivyDeps() ++
+    def mvnDeps = super.mvnDeps() ++
       Deps.http4sServer ++
       Deps.htmx4s ++
       Deps.ciris ++
@@ -65,7 +64,7 @@ object `package` extends RootModule with CiModule { outer =>
       Seq(PathRef(Task.dest))
     }
 
-    def resources: T[Seq[PathRef]] = Task.Sources {
+    def resources: T[Seq[PathRef]] = Task {
       super.resources() ++ tailwindCss() ++ javascript() ++ webjarFiles()
     }
   }

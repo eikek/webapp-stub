@@ -3,7 +3,7 @@ package webappstub.server.routes.invite
 import cats.effect.*
 import cats.syntax.all.*
 
-import webappstub.backend.SignupService
+import webappstub.backend.signup.SignupService
 import webappstub.server.context.*
 import webappstub.server.routes.Layout
 import webappstub.server.routes.invite.InviteError.Key

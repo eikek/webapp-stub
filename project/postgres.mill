@@ -1,12 +1,12 @@
 package build.project
 
-import mill._, scalalib._
+import mill.*, scalalib.*, api.*
 import mill.api.Logger
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import scala.util.Try
 
-object PgWorkerModule extends mill.define.ExternalModule {
-  lazy val millDiscover = mill.define.Discover[this.type]
+object PgWorkerModule extends ExternalModule {
+  lazy val millDiscover = Discover[this.type]
   private def worker = Task.Worker(new Postgres(Task.dest, Task.log))
   def startDb() = Task.Command {
     worker().start()
